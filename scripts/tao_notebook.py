@@ -231,10 +231,144 @@ save_processed(OUT, nodes=nodes, edges=rep.edges, adj=adj, sequences=seqs, split
 !ls -la {OUT}"""),
 ])
 
+NB03 = notebook([
+    md("""\
+# 03 — Xây dựng các đồ thị đối chứng và tập khái niệm giữ lại
+
+**Đầu vào:** kết quả của notebook 02 (`GraphK/processed/junyi/`).
+**Đầu ra** (`GraphK/processed/junyi/graphs/`):
+
+| Tệp | Nội dung |
+|---|---|
+| `heldout_concepts.csv` | tập khái niệm giữ lại (RQ3): không có cạnh thống kê nào chạm vào |
+| `adj_stat_fold{k}.npz` | đồ thị thống kê của phần k, chỉ tính trên người học thuộc tập huấn luyện của phần k |
+| `adj_stat_all.npz` | đồ thị thống kê tính trên mọi người học ngoài tập kiểm tra (dùng khi đánh giá cuối) |
+| `adj_random_fold{k}.npz` | đồ thị ngẫu nhiên, cùng số cạnh với đồ thị chuyên gia (đối chứng âm) |
+| `graph_summary.csv` | đặc trưng của từng đồ thị và mức trùng cạnh với đồ thị chuyên gia |
+| `config.json` | cấu hình đã dùng |
+
+Đồ thị đầy đủ (GKT-Dense) không cần lưu: hàm `graphk.graphs.dense_graph` sinh trực tiếp khi huấn luyện.
+
+**Định nghĩa đồ thị thống kê (GKT-Stat):**
+- Người học `u` thành thạo khái niệm `c` khi tỉ lệ trả lời đúng của `u` trên `c` không dưới ngưỡng `MASTERY_THRESHOLD`.
+- Điểm có hướng của cặp A → B là giá trị gia tăng (added value), chỉ tính trên người học đã làm cả A và B:
+  `AV(A → B) = P(thành thạo B | thành thạo A) − P(thành thạo B)`.
+- Chỉ giữ cặp có ít nhất `MIN_SUPPORT` người học thành thạo A và đã làm B.
+- Chọn đúng số cạnh của đồ thị chuyên gia (979): trước hết mỗi khái niệm nhận cạnh vào có AV lớn nhất, phần còn lại lấy theo AV toàn cục.
+
+**Chống rò rỉ dữ liệu:** đồ thị của phần k không dùng người học của tập kiểm định k hay tập kiểm tra; không cạnh thống kê nào chạm vào khái niệm giữ lại.
+
+Không cần GPU."""),
+    code(SETUP),
+    md("## 0. Cấu hình"),
+    code("""\
+from pathlib import Path
+
+PROC = Path(DRIVE) / 'processed' / 'junyi'
+OUT = PROC / 'graphs'
+
+HELDOUT_FRAC = 0.15        # tỉ lệ khái niệm giữ lại (trong số khái niệm có tương tác)
+MASTERY_THRESHOLD = 0.5    # ngưỡng tỉ lệ đúng để coi là thành thạo
+MIN_SUPPORT = 50           # số người học tối thiểu thành thạo A và đã làm B
+PER_NODE = 1               # số cạnh vào tối thiểu ưu tiên cho mỗi khái niệm
+N_FOLDS = 5
+SEED = 42"""),
+    md("## 1. Đọc dữ liệu và chọn tập khái niệm giữ lại"),
+    code("""\
+import numpy as np
+import pandas as pd
+from graphk.graphs import load_processed, choose_heldout_concepts, edge_set
+
+d = load_processed(PROC)
+nodes, adj_expert = d['nodes'], d['adj_expert']
+N, E = len(nodes), adj_expert.nnz
+heldout = choose_heldout_concepts(nodes, frac=HELDOUT_FRAC, seed=SEED)
+held = set(heldout.tolist())
+touching = sum(1 for a, b in edge_set(adj_expert) if a in held or b in held)
+print(f'Số nút: {N} | số cạnh chuyên gia: {E}')
+print(f'Khái niệm giữ lại: {len(heldout)} | cạnh chuyên gia chạm vào khái niệm giữ lại: {touching}')"""),
+    md("## 2. Đồ thị thống kê theo từng phần"),
+    code("""\
+from graphk.graphs import statistical_graph, fold_users, compare_graphs
+from graphk.preprocess import graph_stats
+
+stat_graphs, rows = {}, []
+for fold in [*range(N_FOLDS), None]:
+    users = fold_users(d['splits'], fold)
+    adj, info = statistical_graph(d['sequences'], users, N, E, heldout=heldout,
+                                  threshold=MASTERY_THRESHOLD, min_support=MIN_SUPPORT, per_node=PER_NODE)
+    name = 'all' if fold is None else f'fold{fold}'
+    stat_graphs[name] = adj
+    rows.append({'graph': 'stat', 'fold': name, **info, **graph_stats(adj), **compare_graphs(adj, adj_expert)})
+    print(name, '| người học:', info['n_users'], '| AV từ', round(info['av_min'], 3), 'đến', round(info['av_max'], 3))"""),
+    md("## 3. Đồ thị ngẫu nhiên và đồ thị chuyên gia (để so sánh)"),
+    code("""\
+from graphk.graphs import random_graph
+
+random_graphs = {f'fold{k}': random_graph(N, E, seed=SEED + k) for k in range(N_FOLDS)}
+for name, adj in random_graphs.items():
+    rows.append({'graph': 'random', 'fold': name, 'n_edges': adj.nnz, **graph_stats(adj), **compare_graphs(adj, adj_expert)})
+rows.append({'graph': 'expert', 'fold': '-', **graph_stats(adj_expert), **compare_graphs(adj_expert, adj_expert)})
+
+cols = ['graph', 'fold', 'n_users', 'n_edges', 'n_isolated', 'n_weak_components', 'largest_component',
+        'is_dag', 'jaccard_directed', 'jaccard_undirected', 'shared_directed', 'reversed']
+summary = pd.DataFrame(rows)[cols]
+summary"""),
+    md("""\
+## 4. Phân tích: đồ thị chuyên gia có khớp với tương quan thống kê không?
+
+So sánh phân phối giá trị gia tăng (AV) của ba nhóm cặp khái niệm, tính trên tập huấn luyện của phần 0:
+- cạnh chuyên gia theo đúng chiều (tiên quyết → phụ thuộc);
+- cạnh chuyên gia theo chiều ngược;
+- mọi cặp đủ hỗ trợ.
+
+Nếu AV của cạnh chuyên gia không cao hơn mặt bằng chung, thì tri thức chuyên gia và tri thức thống kê là hai nguồn thông tin khác nhau. Đây là cơ sở để diễn giải RQ2."""),
+    code("""\
+from graphk.graphs import interactions_of_users, mastery_matrices, added_value_scores
+
+u, q, c = interactions_of_users(d['sequences'], fold_users(d['splits'], 0))
+att, mas = mastery_matrices(u, q, c, N, MASTERY_THRESHOLD)
+av, _ = added_value_scores(att, mas, MIN_SUPPORT)
+ex = list(edge_set(adj_expert))
+groups = {
+    'chuyên gia (xuôi)': np.array([av[a, b] for a, b in ex]),
+    'chuyên gia (ngược)': np.array([av[b, a] for a, b in ex]),
+    'mọi cặp đủ hỗ trợ': av[np.isfinite(av)],
+}
+av_table = pd.DataFrame({k: {'số cặp đủ hỗ trợ': int(np.isfinite(v).sum()),
+                             'trung vị AV': float(np.nanmedian(v)),
+                             'tứ phân vị 75%': float(np.nanpercentile(v, 75))} for k, v in groups.items()}).T
+av_table"""),
+    md("""\
+**Kết quả kiểm tra trên máy (17/11/2026):**
+- Chỉ 637/979 cạnh chuyên gia có đủ hỗ trợ để tính AV.
+- Trung vị AV: cạnh chuyên gia theo chiều xuôi 0,020; theo chiều ngược 0,022; mọi cặp 0,013. Cạnh chuyên gia có tương quan thống kê cao hơn mặt bằng chung một chút, nhưng **dữ liệu hành vi không phân biệt được chiều tiên quyết**.
+- Đồ thị thống kê trùng với đồ thị chuyên gia khoảng 1% cạnh (Jaccard có hướng ≈ 0,01). Đây là hai nguồn tri thức gần như tách rời, nên việc so sánh GKT-Expert với GKT-Stat (RQ2) có ý nghĩa.
+- Đồ thị thống kê có khoảng 330 nút cô lập, trong đó 221 nút buộc phải cô lập: 108 khái niệm giữ lại và 113 khái niệm không có tương tác. Đồ thị chuyên gia chỉ có 59 nút cô lập. Khác biệt về độ phủ này cần được nêu khi diễn giải kết quả."""),
+    md("## 5. Lưu kết quả lên Drive"),
+    code("""\
+import json
+import scipy.sparse as sp
+
+OUT.mkdir(parents=True, exist_ok=True)
+nodes.loc[nodes['node_id'].isin(heldout), ['node_id', 'exercise_name', 'topic', 'area', 'n_interactions']] \\
+    .to_csv(OUT / 'heldout_concepts.csv', index=False)
+for name, adj in stat_graphs.items():
+    sp.save_npz(OUT / f'adj_stat_{name}.npz', adj)
+for name, adj in random_graphs.items():
+    sp.save_npz(OUT / f'adj_random_{name}.npz', adj)
+summary.to_csv(OUT / 'graph_summary.csv', index=False)
+(OUT / 'config.json').write_text(json.dumps({
+    'heldout_frac': HELDOUT_FRAC, 'mastery_threshold': MASTERY_THRESHOLD, 'min_support': MIN_SUPPORT,
+    'per_node': PER_NODE, 'n_folds': N_FOLDS, 'seed': SEED, 'n_heldout': int(len(heldout)), 'n_edges': int(E),
+}, indent=2))
+!ls -la {OUT}"""),
+])
+
 
 if __name__ == "__main__":
     out = ROOT / "notebooks"
     out.mkdir(exist_ok=True)
-    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02)):
+    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03)):
         nbf.write(nb, out / name)
         print("đã ghi", out / name)

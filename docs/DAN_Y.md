@@ -191,11 +191,15 @@ Mỗi công trình được phân tích theo năm khía cạnh: **phương pháp
 | Thiết lập | Đồ thị | Nguồn tri thức |
 |---|---|---|
 | GKT-Expert | cạnh tiên quyết của Junyi | chuyên gia sư phạm |
-| GKT-Stat | đồ thị đồng xuất hiện: ước lượng P(đúng B \| đúng A), giữ cạnh theo ngưỡng hoặc top-k mỗi nút, **chỉ tính trên tập huấn luyện** | thống kê hành vi |
+| GKT-Stat | đồ thị đồng xuất hiện: điểm giá trị gia tăng AV(A → B) = P(thành thạo B \| thành thạo A) − P(thành thạo B), mỗi nút ưu tiên một cạnh vào, phần còn lại lấy theo điểm toàn cục, **chỉ tính trên tập huấn luyện** | thống kê hành vi |
 | GKT-Random / GKT-Dense | đồ thị ngẫu nhiên cùng số cạnh / đồ thị đầy đủ | đối chứng âm (negative control) |
 | AKT, DKT | không dùng đồ thị | — |
 
 - GKT-Stat được xây dựng với số cạnh bằng GKT-Expert để so sánh công bằng.
+- **Kết quả xây dựng đồ thị** (notebook 03, ngày 17/11/2026):
+  - Đồ thị thống kê trùng với đồ thị chuyên gia khoảng 1% cạnh (Jaccard có hướng ≈ 0,01).
+  - Trung vị AV của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau: dữ liệu hành vi không phân biệt được chiều tiên quyết.
+  - Đồ thị thống kê có khoảng 330 nút cô lập, so với 59 của đồ thị chuyên gia. Trong đó 221 nút buộc phải cô lập: 108 khái niệm giữ lại và 113 khái niệm không có tương tác.
 - Thiết lập mở rộng: GKT-Expert∪Stat, sử dụng hợp của hai đồ thị.
 - **Lưu ý:** từ điển dữ liệu chỉ định nghĩa `co_occurrence_matrix` cho MOOCCubeX. Để so sánh trên Junyi, cần tính ma trận tương ứng từ nhật ký tương tác Junyi.
 

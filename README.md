@@ -13,6 +13,7 @@ Chạy các notebook theo thứ tự. Mỗi notebook tự gắn Google Drive, l�
 |---|---|---|
 | 01 | Tải và giải nén dữ liệu Junyi (chạy một lần, cần khoảng 4 GB trên Drive) | [Mở trong Colab](https://colab.research.google.com/github/Trilosphan/GraphK/blob/main/notebooks/01_tai_du_lieu.ipynb) |
 | 02 | Tiền xử lý: chỉ số nút, đồ thị tiên quyết, chuỗi tương tác, phân chia dữ liệu | [Mở trong Colab](https://colab.research.google.com/github/Trilosphan/GraphK/blob/main/notebooks/02_tien_xu_ly.ipynb) |
+| 03 | Đồ thị thống kê theo từng phần, đồ thị ngẫu nhiên, tập khái niệm giữ lại | [Mở trong Colab](https://colab.research.google.com/github/Trilosphan/GraphK/blob/main/notebooks/03_do_thi.ipynb) |
 
 Các notebook được sinh từ `scripts/tao_notebook.py`. Khi cần sửa notebook, sửa script này rồi chạy lại `python scripts/tao_notebook.py`.
 
