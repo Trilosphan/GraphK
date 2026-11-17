@@ -39,13 +39,15 @@ class Config:
     max_train_batches: int | None = None   # giới hạn số lô mỗi epoch (chạy thử nhanh)
     max_eval_batches: int | None = None
     model_kwargs: dict = field(default_factory=dict)
+    grad_clip: float | None = 1.0           # cắt chuẩn gradient; GKT-Stat phân kỳ (mất mát NaN) khi không cắt
     tag: str = ""
 
     @property
     def name(self) -> str:
         g = self.graph if self.model == "gkt" else "none"
+        clip = f"-clip{self.grad_clip:g}" if self.grad_clip else ""
         extra = f"-{self.tag}" if self.tag else ""
-        return f"{self.model}-{g}-fold{self.fold}-seed{self.seed}{extra}"
+        return f"{self.model}-{g}-fold{self.fold}-seed{self.seed}{clip}{extra}"
 
 
 # ---------------------------------------------------------------- dữ liệu
@@ -167,13 +169,18 @@ def run(cfg: Config, data: dict | None = None, log=print) -> dict:
         batches = make_batches(seqs, train_idx, cfg.batch_size, shuffle=True, rng=rng)
         if cfg.max_train_batches is not None:
             batches = batches[:cfg.max_train_batches]
-        t0, total, count = time.time(), 0.0, 0
+        t0, total, count, skipped = time.time(), 0.0, 0, 0
         for b_i, batch in enumerate(batches):
             q, r, mask = collate(seqs, batch, device)
             logit = model(q, r)
             loss = loss_fn(logit[mask], r[:, 1:][mask].float())
             opt.zero_grad()
+            if not torch.isfinite(loss):
+                skipped += 1        # bỏ lô có mất mát không hữu hạn thay vì làm hỏng tham số
+                continue
             loss.backward()
+            if cfg.grad_clip:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
             opt.step()
             total += loss.item() * int(mask.sum())
             count += int(mask.sum())
@@ -193,10 +200,10 @@ def run(cfg: Config, data: dict | None = None, log=print) -> dict:
         else:
             state["bad_epochs"] += 1
         state["history"].append({"epoch": state["epoch"], "train_loss": total / max(count, 1),
-                                 "train_seconds": train_time, "val": val})
+                                 "train_seconds": train_time, "skipped_batches": skipped, "val": val})
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "state": state}, last)
         log(f"Epoch {state['epoch']}: mất mát {total / max(count, 1):.4f} | AUC kiểm định {auc:.4f} | "
-            f"AUC khái niệm giữ lại {val['heldout']['auc']} | {train_time / 60:.1f} phút{' *' if improved else ''}")
+            f"AUC khái niệm giữ lại {val['heldout']['auc']} | {train_time / 60:.1f} phút | lô bỏ qua {skipped}{' *' if improved else ''}")
 
     model.load_state_dict(torch.load(run_dir / "best.pt", map_location=device))
     y, p, qq = predict(model, seqs, test_batches, device, cfg.max_eval_batches)

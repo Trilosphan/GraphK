@@ -338,7 +338,7 @@ GraphK/
 
 | Mô hình | Tham số chính | Cỡ lô | Tối ưu |
 |---|---|---|---|
-| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, tối đa 10 epoch, dừng sớm sau 3 epoch |
+| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, cắt chuẩn gradient 1,0, tối đa 10 epoch, dừng sớm sau 3 epoch |
 | DKT | nhúng 64, LSTM 64, dropout 0,1 | 128 | như trên |
 | AKT | `d_model` 256, 4 khối, 8 head, dropout 0,2 (cài đặt pyKT) | 64 | như trên |
 | Đồ thị thống kê | ngưỡng thành thạo 0,5; hỗ trợ tối thiểu 50; ưu tiên 1 cạnh vào mỗi nút; 979 cạnh | — | — |

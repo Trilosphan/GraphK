@@ -519,7 +519,7 @@ OUT = Path(DRIVE) / 'analysis'
 OUT.mkdir(parents=True, exist_ok=True)
 FOLD, SEED = 0, 42
 
-name = lambda model, graph, tag='': f'{model}-{graph}-fold{FOLD}-seed{SEED}' + (f'-{tag}' if tag else '')
+name = lambda model, graph, tag='': f'{model}-{graph}-fold{FOLD}-seed{SEED}-clip1' + (f'-{tag}' if tag else '')
 MAIN = {'GKT-Expert': name('gkt', 'expert'), 'GKT-Stat': name('gkt', 'stat'), 'GKT-Random': name('gkt', 'random'),
         'DKT': name('dkt', 'none'), 'AKT': name('akt', 'none')}
 ABL = {'GKT-Expert (hai chiều, tự cập nhật)': name('gkt', 'expert'),

@@ -155,7 +155,7 @@ Các hàm `f_self`, `f_fwd`, `f_bwd` là MLP hai tầng với ReLU và dropout 0
 
 ### 3.4. Huấn luyện (notebook 04)
 
-- **Tối ưu:** Adam với tốc độ học 10⁻³, hàm mất mát entropy chéo nhị phân trên các vị trí hợp lệ.
+- **Tối ưu:** Adam với tốc độ học 10⁻³, hàm mất mát entropy chéo nhị phân trên các vị trí hợp lệ, cắt chuẩn gradient tại 1,0 cho mọi mô hình. Lần chạy đầu không cắt gradient, GKT-Stat phân kỳ (mất mát thành NaN) giữa epoch 2, nhiều khả năng do các nút trung tâm bậc cao của đồ thị thống kê. Vì vậy mọi mô hình, kể cả GKT-Expert, được huấn luyện lại với cùng giao thức cắt gradient.
 - **Cỡ lô:** 128; riêng AKT dùng 64 vì vượt 15 GB bộ nhớ của T4 ở cỡ lô 128.
 - **Gom lô:** các đoạn có độ dài gần nhau được gom vào cùng lô để giảm số bước đệm, và thứ tự lô được xáo trộn.
 - **Dừng sớm:** tối đa 10 epoch, dừng sau 3 epoch AUC kiểm định không cải thiện. Giới hạn 10 epoch được đặt sau khi quan sát GKT-Expert: từ epoch 4, AUC kiểm định chỉ tăng khoảng 0,0005 mỗi epoch, nên chạy tới 20 epoch sẽ tốn gấp đôi thời gian GPU mà gần như không đổi kết quả. Mô hình tốt nhất theo AUC kiểm định được đánh giá trên tập kiểm tra chung.
@@ -267,7 +267,7 @@ Kiểm thử trên máy: `python -m pytest` (31 ca).
 
 | Mô hình | Tham số chính | Cỡ lô | Tối ưu |
 |---|---|---|---|
-| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, tối đa 10 epoch, dừng sớm sau 3 epoch |
+| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, cắt chuẩn gradient 1,0, tối đa 10 epoch, dừng sớm sau 3 epoch |
 | DKT | nhúng 64, LSTM 64, dropout 0,1 | 128 | như trên |
 | AKT | `d_model` 256, 4 khối, 8 head, dropout 0,2 (cài đặt pyKT) | 64 | như trên |
 | Đồ thị thống kê | ngưỡng thành thạo 0,5; hỗ trợ tối thiểu 50; ưu tiên 1 cạnh vào mỗi nút; 979 cạnh | — | — |
