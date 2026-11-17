@@ -699,8 +699,8 @@ NB06 = notebook([
 
 | Tệp | Nội dung |
 |---|---|
-| `BaoCao_GraphK.pdf`, `latex/` | báo cáo LaTeX (XeLaTeX, phông DejaVu) và mã nguồn |
-| `BaoCao_GraphK.docx` | báo cáo Word |
+| `BaoCao_GraphK.pdf`, `latex/` | bài báo LaTeX theo khuôn IEEE (IEEEtran, hai cột, XeLaTeX) và mã nguồn |
+| `BaoCao_GraphK.docx` | bài báo Word theo khuôn IEEE (hai cột) |
 | `Seminar_GraphK.pptx` | slide seminar có case study |
 | `kiem_tra/` | ảnh từng trang/slide để rà soát hiển thị |
 
@@ -709,7 +709,7 @@ Không cần GPU. Lần đầu cài TeX Live và LibreOffice mất khoảng 5 ph
     md("## 1. Cài công cụ"),
     code("""\
 !apt-get -qq update > /dev/null
-!apt-get -qq install -y texlive-xetex texlive-latex-extra texlive-fonts-recommended libreoffice-writer libreoffice-impress poppler-utils > /dev/null
+!apt-get -qq install -y texlive-xetex texlive-latex-extra texlive-fonts-recommended texlive-publishers libreoffice-writer libreoffice-impress poppler-utils > /dev/null
 !cd {REPO}/report && npm install --silent pptxgenjs docx
 !xelatex --version | head -1; node --version; soffice --version"""),
     md("## 2. Gom số liệu và vẽ hình"),

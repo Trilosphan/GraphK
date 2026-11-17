@@ -1,4 +1,6 @@
-"""Sinh báo cáo LaTeX (XeLaTeX, tiếng Việt) từ AST của docs/BAO_CAO.md.
+"""Sinh bài báo LaTeX theo khuôn IEEE (lớp IEEEtran, hội nghị, hai cột; XeLaTeX, tiếng Việt) từ AST của docs/BAO_CAO.md.
+
+Phông chữ: TeX Gyre Termes (tương đương Times, có dấu tiếng Việt). Các ký hiệu toán ngoài phông được viết bằng chế độ toán.
 
     python report/tex.py build/bao_cao.ast.json report/thong_tin.json build/latex/main.tex
     (cd build/latex && xelatex main.tex && xelatex main.tex)
@@ -15,8 +17,14 @@ SPECIAL = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r
            "{": r"\{", "}": r"\}", "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
 
 
+MATH = {"→": r"\rightarrow", "←": r"\leftarrow", "≈": r"\approx", "≥": r"\geq", "≤": r"\leq", "⊙": r"\odot",
+        "∈": r"\in", "σ": r"\sigma", "⟨": r"\langle", "⟩": r"\rangle", "−": "-", "×": r"\times"}
+SUP = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻", "0123456789-")
+
+
 def esc(s: str) -> str:
-    return "".join(SPECIAL.get(ch, ch) for ch in s)
+    s = "".join(SPECIAL.get(ch, f"${MATH[ch]}$" if ch in MATH else ch) for ch in s)
+    return re.sub(r"[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+", lambda m: "$^{" + m.group(0).translate(SUP) + "}$", s)
 
 
 def runs_tex(runs: list[dict]) -> str:
@@ -40,18 +48,17 @@ def plain(runs: list[dict]) -> str:
 
 
 NUM = re.compile(r"^(\d+(\.\d+)*\.?)\s+")
-UNNUMBERED = ("Tóm tắt", "Phụ lục", "Tài liệu tham khảo", "Kế hoạch hình")
 
 
 def heading(level: int, runs: list[dict]) -> str:
+    """IEEEtran tự đánh số mục bằng số La Mã (I, II, …) và mục con bằng chữ (A, B, …)."""
     text = plain(runs)
-    numbered = bool(NUM.match(text)) and not text.startswith(UNNUMBERED)
-    text = NUM.sub("", text)
+    numbered = bool(NUM.match(text))
+    title = esc(NUM.sub("", text))
+    if not numbered and level == 2 and text.startswith("Phụ lục"):
+        return "\\appendix\n\\section*{" + title + "}"
     cmd = {2: "section", 3: "subsection", 4: "subsubsection"}.get(level, "paragraph")
-    title = esc(text)
-    if numbered:
-        return f"\\{cmd}{{{title}}}"
-    return f"\\{cmd}*{{{title}}}\n\\addcontentsline{{toc}}{{{cmd}}}{{{title}}}"
+    return f"\\{cmd}{{{title}}}" if numbered else f"\\{cmd}*{{{title}}}"
 
 
 def list_tex(items: list[dict]) -> str:
@@ -70,51 +77,76 @@ def list_tex(items: list[dict]) -> str:
     return "\n".join(out)
 
 
+def wide_table(b: dict) -> bool:
+    """Bảng nhiều cột hoặc ô dài trải hai cột (table*), như cách đặt bảng rộng trong bài IEEE."""
+    longest = max((len(plain(c)) for r in [b["header"], *b["rows"]] for c in r), default=0)
+    return len(b["header"]) >= 5 or longest > 45
+
+
 def table_tex(b: dict) -> str:
     n = len(b["header"])
-    # cột đầu co theo nội dung, các cột còn lại chia đều bề rộng
-    spec = "l" + "X" * (n - 1) if n > 2 else "lX"
+    wide = wide_table(b)
+    env = "table*" if wide else "table"
+    spec = "l" + ">{\\raggedright\\arraybackslash}X" * (n - 1)
     head = " & ".join(r"\textbf{" + runs_tex(c) + "}" for c in b["header"])
     rows = [" & ".join(runs_tex(c) for c in (r + [[]] * (n - len(r)))[:n]) + r" \\" for r in b["rows"]]
-    return ("\\begin{center}\\small\n\\begin{tabularx}{\\linewidth}{" + spec.replace("X", ">{\\raggedright\\arraybackslash}X") + "}\n"
-            "\\toprule\n" + head + r" \\" + "\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabularx}\n\\end{center}")
+    cap = f"\\caption{{{runs_tex(b['caption'])}}}\n" if b.get("caption") else ""
+    width = r"\textwidth" if wide else r"\columnwidth"
+    # IEEE: chú thích bảng đặt trên bảng
+    return (f"\\begin{{{env}}}[!t]\n\\centering\n{cap}\\footnotesize\n"
+            f"\\begin{{tabularx}}{{{width}}}{{{spec}}}\n"
+            "\\toprule\n" + head + r" \\" + "\n\\midrule\n" + "\n".join(rows) + f"\n\\bottomrule\n\\end{{tabularx}}\n\\end{{{env}}}")
 
 
-def figure_tex(b: dict, fig_dir: str) -> str:
+def png_ratio(path: Path) -> float:
+    import struct
+    try:
+        w, h = struct.unpack(">II", path.read_bytes()[16:24])
+        return w / h
+    except (OSError, struct.error):
+        return 1.5
+
+
+def figure_tex(b: dict, fig_dir: str, src_dir: Path) -> str:
     cap = re.sub(r"^Hình\s+\d+\.\s*", "", plain(b["caption"]))
     name = Path(b["path"]).name
-    return ("\\begin{figure}[htbp]\n\\centering\n"
-            f"\\includegraphics[width=\\linewidth]{{{fig_dir}/{name}}}\n"
-            f"\\caption{{{esc(cap)}}}\n\\end{{figure}}")
+    # hình rất ngang (tỉ lệ ≥ 2) trải hai cột
+    env = "figure*" if png_ratio(src_dir / name) >= 2 else "figure"
+    return (f"\\begin{{{env}}}[!t]\n\\centering\n"
+            f"\\includegraphics[width=\\{'textwidth' if env == 'figure*' else 'columnwidth'}]{{{fig_dir}/{name}}}\n"
+            f"\\caption{{{esc(cap)}}}\n\\end{{{env}}}")
 
 
-PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
-\usepackage[a4paper,margin=2.5cm]{geometry}
+PREAMBLE = r"""\documentclass[conference,a4paper]{IEEEtran}
 \usepackage{fontspec}
-\setmainfont{DejaVuSerif}[Path=fonts/,Extension=.ttf,BoldFont=*-Bold,ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
-\setsansfont{DejaVuSans}[Path=fonts/,Extension=.ttf,BoldFont=*-Bold,ItalicFont=*-Oblique,BoldItalicFont=*-BoldOblique]
-\setmonofont{DejaVuSansMono}[Path=fonts/,Extension=.ttf,Scale=0.88,BoldFont=*-Bold,ItalicFont=*-Oblique,BoldItalicFont=*-BoldOblique]
-\usepackage{graphicx,booktabs,tabularx,array,xcolor,enumitem,caption,float}
+\setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setmonofont{DejaVuSansMono}[Path=fonts/,Extension=.ttf,Scale=0.85,BoldFont=*-Bold,ItalicFont=*-Oblique,BoldItalicFont=*-BoldOblique]
+\usepackage{graphicx,booktabs,tabularx,array}
 \usepackage[hidelinks]{hyperref}
-\setlist{nosep,leftmargin=1.4em}
-\setlength{\parskip}{0.45em}
-\setlength{\parindent}{0pt}
 \renewcommand{\figurename}{Hình}
 \renewcommand{\tablename}{Bảng}
-\renewcommand{\contentsname}{Mục lục}
-\captionsetup{font=small,labelsep=period}
-\linespread{1.1}
+\renewcommand{\abstractname}{Tóm tắt}
+\renewcommand{\IEEEkeywordsname}{Từ khóa}
+\renewcommand{\refname}{Tài liệu tham khảo}
+\renewcommand{\appendixname}{Phụ lục}
+% tiếng Việt không có mẫu ngắt từ: cho phép giãn dòng để tránh tràn lề trong cột hẹp
+\sloppy
+\setlength{\emergencystretch}{3em}
 """
 
 
-def build(ast: list[dict], info: dict, fig_dir: str = "figures") -> str:
+def build(ast: list[dict], info: dict, fig_dir: str = "figures", src_dir: Path = Path("report/figures")) -> str:
     title = next((plain(b["runs"]) for b in ast if b["type"] == "h" and b["level"] == 1), "Báo cáo")
-    body = []
+    front, body = [], []
     for b in ast:
         t = b["type"]
         if t == "h" and b["level"] == 1:
             continue
-        if t == "h":
+        if t == "abstract":
+            front.append("\\begin{abstract}\n" + runs_tex(b["runs"]) + "\n\\end{abstract}")
+        elif t == "keywords":
+            front.append("\\begin{IEEEkeywords}\n" + runs_tex(b["runs"]).strip() + "\n\\end{IEEEkeywords}")
+        elif t == "h":
             body.append(heading(b["level"], b["runs"]))
         elif t == "p":
             body.append(runs_tex(b["runs"]))
@@ -123,20 +155,20 @@ def build(ast: list[dict], info: dict, fig_dir: str = "figures") -> str:
         elif t == "table":
             body.append(table_tex(b))
         elif t == "figure":
-            body.append(figure_tex(b, fig_dir))
+            body.append(figure_tex(b, fig_dir, src_dir))
+        elif t == "refs":
+            body.append("\\begin{thebibliography}{" + "9" * len(str(len(b["items"]))) + "}\n"
+                        + "\n".join(f"\\bibitem{{r{i + 1}}} " + runs_tex(it) for i, it in enumerate(b["items"]))
+                        + "\n\\end{thebibliography}")
         elif t == "quote":
             body.append("\\begin{quote}\\small\\itshape\n" + "\\\\\n".join(runs_tex(l) for l in b["lines"]) + "\n\\end{quote}")
-        elif t == "hr":
-            body.append("\\medskip")
-    title_page = (
-        "\\begin{titlepage}\n\\centering\n"
-        f"{{\\large {esc(info.get('truong', ''))}}}\\\\[0.3em]\n{{\\large {esc(info.get('khoa', ''))}}}\\\\[3cm]\n"
-        f"{{\\large {esc(info.get('mon_hoc', ''))}}}\\\\[1em]\n"
-        f"{{\\LARGE\\bfseries {esc(title)}}}\\\\[3cm]\n"
-        f"\\begin{{tabular}}{{ll}}\nGiảng viên: & {esc(info.get('giang_vien', ''))}\\\\\n"
-        f"Thực hiện: & {esc(info.get('tac_gia', ''))}\\\\\nLớp: & {esc(info.get('lop', ''))}\\\\\n\\end{{tabular}}\n\\vfill\n"
-        f"{esc(info.get('dia_diem_ngay', ''))}\n\\end{{titlepage}}\n\\tableofcontents\n\\newpage\n")
-    return PREAMBLE + "\\begin{document}\n" + title_page + "\n\n".join(body) + "\n\\end{document}\n"
+    author = (
+        "\\author{\\IEEEauthorblockN{" + esc(info.get("tac_gia", "")) + "}\n"
+        "\\IEEEauthorblockA{" + esc(info.get("khoa", "")) + ", " + esc(info.get("truong", "")) + "\\\\\n"
+        + esc(info.get("mon_hoc", "")) + " -- Lớp " + esc(info.get("lop", "")) + "\\\\\n"
+        "Giảng viên hướng dẫn: " + esc(info.get("giang_vien", "")) + "}}\n")
+    return (PREAMBLE + "\\begin{document}\n\\title{" + esc(title) + "}\n" + author + "\\maketitle\n\n"
+            + "\n\n".join(front) + "\n\n" + "\n\n".join(body) + "\n\\end{document}\n")
 
 
 def copy_assets(out_dir: Path, figures: Path) -> None:
@@ -158,6 +190,7 @@ if __name__ == "__main__":
     info = json.load(open(sys.argv[2], encoding="utf-8"))
     out = Path(sys.argv[3])
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build(ast, info), encoding="utf-8")
-    copy_assets(out.parent, Path(sys.argv[4]) if len(sys.argv) > 4 else Path("report/figures"))
+    figures = Path(sys.argv[4]) if len(sys.argv) > 4 else Path("report/figures")
+    out.write_text(build(ast, info, src_dir=figures), encoding="utf-8")
+    copy_assets(out.parent, figures)
     print("đã ghi", out)

@@ -111,17 +111,44 @@ def scalar(k: dict, expr: str) -> str:
     raise KeyError(expr)
 
 
-def fill(md: str, k: dict) -> str:
+CITE = re.compile(r"\[(@[\w-]+(?:\s*;\s*@[\w-]+)*)\]")
+
+
+def cite(md: str, bib: dict) -> str:
+    """Trích dẫn kiểu IEEE: [@a] / [@a; @b] -> [1] / [1], [2], đánh số theo thứ tự xuất hiện lần đầu.
+
+    Vị trí <!-- TAI_LIEU --> được thay bằng danh mục "[n] mục tài liệu", chỉ gồm tài liệu được trích.
+    """
+    order: list[str] = []
+
+    def number(m: re.Match) -> str:
+        keys = [k.strip().lstrip("@") for k in m.group(1).split(";")]
+        for key in keys:
+            if key not in bib:
+                raise KeyError(f"Trích dẫn không có trong danh mục: {key}")
+            if key not in order:
+                order.append(key)
+        return ", ".join(f"[{order.index(key) + 1}]" for key in keys)
+
+    md = CITE.sub(number, md)
+    refs = "\n\n".join(f"[{i + 1}] {bib[key]}" for i, key in enumerate(order))
+    return md.replace("<!-- TAI_LIEU -->", refs)
+
+
+def fill(md: str, k: dict, bib: dict | None = None) -> str:
     blocks = {"BANG1": bang1, "BANG2": bang2, "BANG3": bang3, "BANG4": bang4, "DELONG": delong, "CASE": case}
     for key, fn in blocks.items():
         md = md.replace(f"<!-- {key} -->", fn(k))
-    return re.sub(r"\{\{([^}]+)\}\}", lambda m: scalar(k, m.group(1)), md)
+    md = re.sub(r"\{\{([^}]+)\}\}", lambda m: scalar(k, m.group(1)), md)
+    return cite(md, bib) if bib is not None else md
 
 
 if __name__ == "__main__":
     md = Path(sys.argv[1]).read_text(encoding="utf-8")
     k = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
     out = Path(sys.argv[3])
+    bib_path = Path(sys.argv[4]) if len(sys.argv) > 4 else Path(__file__).with_name("tai_lieu.json")
+    bib = json.loads(bib_path.read_text(encoding="utf-8"))
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(fill(md, k), encoding="utf-8")
+    out.write_text(fill(md, k, bib), encoding="utf-8")
     print("đã ghi", out)

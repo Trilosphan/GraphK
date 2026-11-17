@@ -269,6 +269,117 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
 }
 // 13 --------------------------------------------------------------- case study 1
 const CS = K.case_study || {};
+const csName = (id) => (CS.focus_names || [])[(CS.focus || []).indexOf(id)] || String(id);
+// Chọn bước minh họa: người học trả lời đúng khái niệm a, trong khi khái niệm phụ thuộc b (cạnh a -> b) chưa được làm;
+// lấy bước làm P(đúng b) của GKT-Expert tăng nhiều nhất.
+function chooseStep() {
+  const tr = (CS.traces || {})["GKT-Expert"];
+  if (!tr || !CS.q) return null;
+  let best = null;
+  (CS.chain || []).forEach(([a, b]) => {
+    const firstB = CS.q.indexOf(b);
+    CS.q.forEach((c, t) => {
+      if (c !== a || !CS.r[t] || t === 0 || (firstB !== -1 && firstB <= t)) return;
+      const ib = CS.focus.indexOf(b);
+      const d = tr[ib][t] - tr[ib][t - 1];
+      if (!best || d > best.delta) best = { t, a, b, delta: d };
+    });
+  });
+  return best;
+}
+const STEP = chooseStep();
+// 13a -------------------------------------------------------------- lý thuyết: bài toán qua chuỗi của người học
+if (CS.q) {
+  const s = addSlide("NOI_DUNG", "Case study");
+  s.addText("Case study: chuỗi tiên quyết giải tích của một người học", { placeholder: "title" });
+  // sơ đồ: xếp khái niệm theo tầng (độ sâu trong chuỗi), cạnh có mũi tên = quan hệ tiên quyết chuyên gia
+  const ids = CS.focus;
+  const depth = Object.fromEntries(ids.map((i) => [i, 0]));
+  for (let k = 0; k < ids.length; k++) (CS.chain || []).forEach(([a, b]) => { depth[b] = Math.max(depth[b], depth[a] + 1); });
+  const layers = {};
+  ids.forEach((i) => (layers[depth[i]] = layers[depth[i]] || []).push(i));
+  const nL = Object.keys(layers).length;
+  const pos = {};
+  const bw = 2.05, bh = 0.62, x0 = M, areaW = 7.6, areaY = 1.55, areaH = 4.6;
+  Object.entries(layers).forEach(([d, arr]) => arr.forEach((id, j) => {
+    pos[id] = { x: x0 + (Number(d) * (areaW - bw)) / Math.max(nL - 1, 1), y: areaY + ((j + 0.5) * areaH) / arr.length - bh / 2 };
+  }));
+  (CS.chain || []).forEach(([a, b], k) => {
+    const p = pos[a], q = pos[b];
+    const x1 = p.x + bw, y1 = p.y + bh / 2, x2 = q.x, y2 = q.y + bh / 2;
+    s.addShape(pres.shapes.LINE, { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.max(Math.abs(x2 - x1), 0.01), h: Math.max(Math.abs(y2 - y1), 0.01),
+      flipV: y2 < y1, line: { color: HEX.accent4, width: 1.5, endArrowType: "triangle" }, objectName: `canh_${k}` });
+  });
+  ids.forEach((id) => {
+    const highlight = STEP && (id === STEP.a ? HEX.accent1 : id === STEP.b ? HEX.accent3 : null);
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: pos[id].x, y: pos[id].y, w: bw, h: bh, rectRadius: 0.1,
+      fill: { color: highlight || HEX.lt2 }, line: { color: highlight || "C9CFDB" }, objectName: `nut_${id}` });
+    text(s, csName(id), { x: pos[id].x, y: pos[id].y, w: bw, h: bh, align: "center", valign: "middle", fontSize: 12,
+      bold: !!highlight, color: highlight ? HEX.lt1 : HEX.dk1 });
+  });
+  const correct = CS.r.filter((v) => v).length;
+  text(s, [
+    { text: "Bài toán truy vết tri thức", options: { bold: true, fontSize: 17, breakLine: true } },
+    { text: `Người học ${CS.user_id}: ${CS.q.length} tương tác (q_t, a_t), ${correct} lần đúng.`, options: { breakLine: true } },
+    { text: "Mỗi bước, mô hình đọc lịch sử q_1..t, a_1..t và dự đoán P(a_{t+1} = 1 | q_{t+1}).", options: { breakLine: true } },
+    { text: " ", options: { breakLine: true } },
+    { text: "Đồ thị tiên quyết chuyên gia", options: { bold: true, fontSize: 17, breakLine: true } },
+    { text: "Mũi tên u → v: phải nắm u trước khi học v. GKT dùng chính các cạnh này để truyền bằng chứng giữa các khái niệm.", options: { breakLine: true } },
+    ...(STEP ? [{ text: " ", options: { breakLine: true } },
+      { text: `Bước minh họa (slide sau): bước ${STEP.t}, làm đúng `, options: {} },
+      { text: csName(STEP.a), options: { bold: true, color: HEX.accent1 } },
+      { text: "; khái niệm phụ thuộc ", options: {} }, { text: csName(STEP.b), options: { bold: true, color: HEX.accent3 } },
+      { text: " chưa được làm.", options: {} }] : []),
+  ], { x: M + 8.0, y: 1.55, w: W - 2 * M - 8.0, h: 5.0, fontSize: 14 });
+  s.addNotes("Giới thiệu case study như một ví dụ cụ thể của bài toán: chuỗi (khái niệm, kết quả) của một người học thật trong tập kiểm tra, "
+    + "và các cạnh tiên quyết chuyên gia giữa những khái niệm người học đã gặp. Khối màu cam là khái niệm được trả lời ở bước minh họa, khối màu xanh là khái niệm phụ thuộc chưa được làm.");
+}
+// 13b -------------------------------------------------------------- lý thuyết: một bước lan truyền
+if (STEP) {
+  const s = addSlide("NOI_DUNG", "Case study");
+  s.addText(`Lý thuyết qua một bước: làm đúng ${csName(STEP.a)}`, { placeholder: "title" });
+  card(s, M, 1.45, 6.1, 5.2, HEX.lt2, "cong_thuc");
+  text(s, [
+    { text: "GKT lan truyền hai chiều", options: { bold: true, fontSize: 16, breakLine: true, color: HEX.accent1 } },
+    { text: `1. Tương tác: x_t = E[2·i + a_t], i = ${csName(STEP.a)}, a_t = 1`, options: { breakLine: true } },
+    { text: "2. Tự thân: m_i = f_self([h_i ; x_t])", options: { breakLine: true } },
+    { text: "3. Phụ thuộc j (cạnh i → j): m_j = w·f_fwd([h_i ; x_t ; h_j ; e_j])", options: { breakLine: true } },
+    { text: "    Tiên quyết j (cạnh j → i): m_j = w·f_bwd(…)", options: { breakLine: true } },
+    { text: "4. Cập nhật: h_j ← GRU(xóa–thêm(m_j), h_j), chỉ i và lân cận", options: { breakLine: true } },
+    { text: "5. Dự đoán: P(đúng j) = σ(W·h_j + b)", options: { breakLine: true } },
+    { text: " ", options: { breakLine: true } },
+    { text: "DKT (đối chứng)", options: { bold: true, fontSize: 16, breakLine: true, color: HEX.accent3 } },
+    { text: "h_t = LSTM(x_t, h_{t-1}): một vector chung cho mọi khái niệm;", options: { breakLine: true } },
+    { text: "P(đúng j) = σ(W_j·h_t). Quan hệ giữa khái niệm chỉ nằm ngầm trong W.", options: {} },
+  ], { x: M + 0.25, y: 1.6, w: 5.6, h: 4.9, fontSize: 13 });
+  // bảng trước / sau cho khái niệm được trả lời và các lân cận trong chuỗi
+  const nb = [STEP.a, ...new Set((CS.chain || []).flatMap(([a, b]) => (a === STEP.a ? [b] : b === STEP.a ? [a] : [])))];
+  const models = Object.keys(CS.traces);
+  const head = ["Khái niệm", "Quan hệ", ...models.flatMap((m) => [`${m} trước`, "sau"])];
+  const rel = (id) => (id === STEP.a ? "được trả lời" : (CS.chain || []).some(([a, b]) => a === STEP.a && b === id) ? "phụ thuộc" : "tiên quyết");
+  const cell = (v, bold) => ({ text: f(v, 2), options: { bold } });
+  const rows = [head.map((h) => ({ text: h, options: { bold: true, fill: { color: HEX.lt2 } } })),
+    ...nb.map((id) => {
+      const i = CS.focus.indexOf(id);
+      return [csName(id), rel(id), ...models.flatMap((m) => {
+        const tr = CS.traces[m][i];
+        return [cell(tr[STEP.t - 1], false), cell(tr[STEP.t], tr[STEP.t] - tr[STEP.t - 1] > 0.05)];
+      })];
+    })];
+  const nCol = head.length;
+  const restW = (W - 2 * M - 6.4 - 2.25 - 1.15) / (nCol - 2);
+  s.addTable(rows, { x: M + 6.4, y: 1.45, w: W - 2 * M - 6.4, colW: [2.25, 1.15, ...Array(nCol - 2).fill(restW)], fontSize: 11,
+    fontFace: THEME.bodyFontFace, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" } });
+  const dE = STEP.delta;
+  text(s, [
+    { text: "Đọc bảng: ", options: { bold: true } },
+    { text: `P(đúng) dự đoán ngay trước và ngay sau bước ${STEP.t}; in đậm khi tăng hơn 0,05. ` },
+    { text: `Với GKT-Expert, ${csName(STEP.b)} tăng ${f(dE, 2)} dù người học chưa làm bài này: bằng chứng đi theo cạnh ${csName(STEP.a)} → ${csName(STEP.b)}. ` },
+    { text: "DKT cũng có thể thay đổi dự đoán các khái niệm khác, nhưng qua vector ẩn chung chứ không theo cấu trúc tường minh." },
+  ], { x: M + 6.4, y: 1.55 + 0.42 * (nb.length + 1) + 0.3, w: W - 2 * M - 6.4, h: 2.6, fontSize: 13 });
+  s.addNotes("Giải thích lý thuyết qua một bước cụ thể. Bên trái là công thức một bước cập nhật của GKT hai chiều và của DKT. "
+    + "Bên phải là số liệu thật lấy từ trace của mô hình: mức thành thạo dự đoán của khái niệm vừa trả lời và các khái niệm kề nó, ngay trước và ngay sau bước đó.");
+}
 {
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText("Case study: một người học trong tập kiểm tra", { placeholder: "title" });

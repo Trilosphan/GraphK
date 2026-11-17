@@ -2,7 +2,8 @@
 
 Khối hỗ trợ: tiêu đề (#..####), đoạn văn, danh sách gạch đầu dòng/đánh số (lồng tối đa 3 mức),
 bảng (|...|), trích dẫn (> ...), hình (![chú thích](đường dẫn)), đường kẻ (---), chú thích HTML (bỏ qua).
-Định dạng trong dòng: **đậm**, *nghiêng*, `mã`, [chữ](url).
+Định dạng trong dòng: **đậm**, *nghiêng*, `mã`, [chữ](url). Sau đó ieee() gắn nhãn tóm tắt, từ khóa,
+chú thích bảng và danh mục tài liệu tham khảo.
 
     python report/md_ast.py docs/BAO_CAO.md > build/bao_cao.ast.json
 """
@@ -104,6 +105,42 @@ def parse(md: str) -> list[dict]:
     return blocks
 
 
+def ieee(blocks: list[dict]) -> list[dict]:
+    """Nhận diện các khối theo chuẩn trình bày IEEE trên AST chung (dùng cho cả LaTeX và Word).
+
+    - Đoạn văn dưới "## Tóm tắt" -> khối "abstract"; đoạn bắt đầu bằng **Từ khóa—** -> khối "keywords".
+    - Đoạn chỉ gồm "**Bảng N.** chú thích" đứng ngay trước một bảng -> chú thích của bảng (đặt trên bảng).
+    - Dưới "## Tài liệu tham khảo", các đoạn "[n] ..." -> khối "refs".
+    """
+    out: list[dict] = []
+    section = ""
+    for i, b in enumerate(blocks):
+        if b["type"] == "h" and b["level"] == 2:
+            section = "".join(r["text"] for r in b["runs"])
+        if b["type"] == "p":
+            first = b["runs"][0]["text"] if b["runs"] else ""
+            if first.startswith("Từ khóa"):
+                out.append({"type": "keywords", "runs": b["runs"][1:]})
+                continue
+            if section == "Tóm tắt":
+                out.append({"type": "abstract", "runs": b["runs"]})
+                continue
+            if b["runs"][0].get("b") and re.match(r"^Bảng [IVXLC\d]+\.", first) and i + 1 < len(blocks) and blocks[i + 1]["type"] == "table":
+                blocks[i + 1]["caption"] = inline(re.sub(r"^Bảng [IVXLC\d]+\.\s*", "", "".join(r["text"] for r in b["runs"])).strip())
+                continue
+            if section == "Tài liệu tham khảo" and (m := re.match(r"^\[(\d+)\]\s*", first)):
+                b["runs"][0] = {**b["runs"][0], "text": first[m.end():]}
+                if out and out[-1]["type"] == "refs":
+                    out[-1]["items"].append(b["runs"])
+                else:
+                    out.append({"type": "refs", "items": [b["runs"]]})
+                continue
+        if b["type"] == "h" and b["level"] == 2 and section in ("Tóm tắt", "Tài liệu tham khảo"):
+            continue  # tiêu đề do khuôn IEEE tự đặt
+        out.append(b)
+    return out
+
+
 if __name__ == "__main__":
     text = open(sys.argv[1], encoding="utf-8").read()
-    json.dump(parse(text), sys.stdout, ensure_ascii=False, indent=1)
+    json.dump(ieee(parse(text)), sys.stdout, ensure_ascii=False, indent=1)
