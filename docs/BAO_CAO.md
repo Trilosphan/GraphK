@@ -5,7 +5,7 @@ trích dẫn dạng [@…] được đánh số kiểu IEEE theo thứ tự xu�
 
 ## Tóm tắt
 
-Các mô hình truy vết tri thức tuần tự bỏ qua bản đồ tiên quyết mà chuyên gia sư phạm đã xây dựng, còn các mô hình dựa trên đồ thị hiện có lại tự suy đồ thị từ dữ liệu, nên chưa tách được giá trị riêng của tri thức chuyên gia. Bài báo đề xuất GKT lan truyền hai chiều trên đồ thị tiên quyết có hướng, với hàm thông điệp riêng cho chiều xuôi (tiên quyết → phụ thuộc) và chiều ngược. Cùng một kiến trúc được huấn luyện trên ba đồ thị có cùng 979 cạnh: đồ thị chuyên gia của Junyi Academy, đồ thị thống kê dựng từ giá trị gia tăng của hành vi làm bài trên tập huấn luyện, và đồ thị ngẫu nhiên. Rò rỉ gián tiếp được kiểm soát bằng 108 khái niệm giữ lại không có cạnh thống kê nào. Trên 191.874 người học và 25,85 triệu tương tác, GKT-Expert đạt AUC {{auc:GKT-Expert}}, cao hơn GKT-Random ({{auc:GKT-Random}}) nhưng thấp hơn DKT ({{auc:DKT}}). ⟨Bổ sung GKT-Stat, AKT.⟩ Phân tích dữ liệu cho thấy đồ thị chuyên gia chứa một chu trình và hai vòng tự thân, gần như không trùng với tương quan hành vi (Jaccard ≈ 0,01), và tương quan hành vi không phân biệt được chiều tiên quyết.
+Các mô hình truy vết tri thức tuần tự bỏ qua bản đồ tiên quyết mà chuyên gia sư phạm đã xây dựng, còn các mô hình dựa trên đồ thị hiện có lại tự suy đồ thị từ dữ liệu, nên chưa tách được giá trị riêng của tri thức chuyên gia. Bài báo đề xuất GKT lan truyền hai chiều trên đồ thị tiên quyết có hướng, với hàm thông điệp riêng cho chiều xuôi (tiên quyết → phụ thuộc) và chiều ngược. Cùng một kiến trúc được huấn luyện trên ba đồ thị có cùng 979 cạnh: đồ thị chuyên gia của Junyi Academy, đồ thị thống kê dựng từ giá trị gia tăng của hành vi làm bài trên tập huấn luyện, và đồ thị ngẫu nhiên. Rò rỉ gián tiếp được kiểm soát bằng 108 khái niệm giữ lại không có cạnh thống kê nào. Trên 191.874 người học và 25,85 triệu tương tác, GKT-Expert đạt AUC {{auc:GKT-Expert}}, cao hơn GKT-Stat ({{auc:GKT-Stat}}) và GKT-Random ({{auc:GKT-Random}}) khoảng 0,003, và lợi thế này giữ nguyên trên khái niệm giữ lại; đồ thị thống kê không tốt hơn đồ thị ngẫu nhiên. Tuy vậy, DKT không dùng đồ thị vẫn đạt AUC cao nhất ({{auc:DKT}}). Phân tích dữ liệu cho thấy đồ thị chuyên gia chứa một chu trình và hai vòng tự thân, gần như không trùng với tương quan hành vi (Jaccard ≈ 0,01), và tương quan hành vi không phân biệt được chiều tiên quyết.
 
 **Từ khóa—**truy vết tri thức, mạng nơ-ron đồ thị, đồ thị tiên quyết, Junyi Academy, rò rỉ dữ liệu, giáo dục thông minh.
 
@@ -93,7 +93,7 @@ Kết quả là của phần 0: tập huấn luyện 122.799 người học (179
 
 <!-- BANG1 -->
 
-DKT đạt AUC cao nhất ({{auc:DKT}}), hơn GKT-Expert ({{auc:GKT-Expert}}) khoảng 0,005; GKT-Expert hơn GKT-Random ({{auc:GKT-Random}}) khoảng 0,003. Như vậy với RQ1, trên Junyi, lan truyền trên đồ thị chuyên gia không vượt được mô hình tuần tự đơn giản, phù hợp với nhận định của simpleKT [@simplekt]. ⟨Bổ sung GKT-Stat, AKT.⟩
+Thứ tự trên tập kiểm tra là DKT ({{auc:DKT}}) > GKT-Expert ({{auc:GKT-Expert}}) > GKT-Stat ({{auc:GKT-Stat}}) ≈ GKT-Random ({{auc:GKT-Random}}); ACC và RMSE cho cùng thứ tự (Bảng II). Ba điểm đáng chú ý. Thứ nhất, với cùng kiến trúc và cùng 979 cạnh, đồ thị chuyên gia hơn đồ thị thống kê {{delta:GKT-Expert:GKT-Stat}} và hơn đồ thị ngẫu nhiên {{delta:GKT-Expert:GKT-Random}}: tri thức sư phạm mang thông tin mà cấu trúc ngẫu nhiên không có. Thứ hai, đồ thị thống kê chỉ hơn đồ thị ngẫu nhiên {{delta:GKT-Stat:GKT-Random}}, tức các cạnh có giá trị gia tăng cao nhất gần như không giúp gì thêm cho lan truyền. Thứ ba, với RQ1, GKT-Expert vẫn thấp hơn DKT khoảng 0,005; trên Junyi, lan truyền theo đồ thị tiên quyết không vượt được mô hình tuần tự đơn giản, phù hợp với nhận định của simpleKT [@simplekt]. ⟨Bổ sung AKT khi chạy xong.⟩
 
 ![Hình 3. AUC kiểm định theo epoch (phần 0).](report/figures/hinh3_duong_cong_hoc.png)
 
@@ -117,7 +117,7 @@ DKT đạt AUC cao nhất ({{auc:DKT}}), hơn GKT-Expert ({{auc:GKT-Expert}}) kh
 
 <!-- BANG4 -->
 
-Mọi mô hình đều giảm AUC trên khái niệm giữ lại. GKT-Expert đạt {{auc_giu_lai:GKT-Expert}} trên khái niệm giữ lại, cao hơn GKT-Random ({{auc_giu_lai:GKT-Random}}): lợi thế nhỏ của đồ thị chuyên gia được giữ trên các khái niệm không có cạnh thống kê. ⟨RQ3: so sánh khoảng cách của GKT-Stat khi chạy xong.⟩
+Mọi mô hình đều giảm khoảng 0,04 AUC trên khái niệm giữ lại, kể cả DKT không dùng đồ thị, nên mức giảm chủ yếu do các khái niệm này khó dự đoán hơn chứ không do đồ thị (Bảng IV). Điểm quyết định cho RQ3 là khoảng cách của GKT-Stat: {{auc_con_lai:GKT-Stat}} trên khái niệm còn lại và {{auc_giu_lai:GKT-Stat}} trên khái niệm giữ lại, gần như trùng với GKT-Random ({{auc_con_lai:GKT-Random}} và {{auc_giu_lai:GKT-Random}}). Đồ thị thống kê không tạo lợi thế ở nơi nó có cạnh, nên không có dấu hiệu rò rỉ gián tiếp làm thổi phồng kết quả. Ngược lại, GKT-Expert hơn GKT-Random {{delta:GKT-Expert:GKT-Random:khái niệm giữ lại}} trên khái niệm giữ lại, ngang với mức chênh trên toàn tập. Bảng V củng cố cơ chế: lợi thế của GKT-Expert xuất hiện ở khái niệm có cạnh chuyên gia (bậc thấp và bậc cao, khoảng 0,003) nhưng biến mất ở khái niệm cô lập trong đồ thị chuyên gia (0,8387 so với 0,8385), đúng như kỳ vọng vì nút cô lập không nhận thông điệp lân cận.
 
 ### 4.5. Kiểm định ghép cặp
 
@@ -131,21 +131,21 @@ Mọi mô hình đều giảm AUC trên khái niệm giữ lại. GKT-Expert đ�
 
 ![Hình 5. Case study: mức thành thạo dự đoán sau từng bước cho các khái niệm trong chuỗi tiên quyết. Dấu o: trả lời đúng, x: trả lời sai trên khái niệm của hàng đó.](report/figures/hinh5_case_study.png)
 
-Khi người học làm đúng `power_rule`, GKT-Expert nâng mức thành thạo dự đoán của `quotient_rule` và `lhopitals_rule` dù người học chưa làm hai bài này: bằng chứng được truyền theo cạnh tiên quyết (Hình 5). DKT cũng thay đổi dự đoán cho các khái niệm khác, nhưng qua vector ẩn chung chứ không theo cấu trúc tường minh.
+Ở bước 24, người học làm đúng `power_rule`; GKT-Expert nâng mức thành thạo dự đoán của `quotient_rule` từ 0,33 lên 0,71 và của `lhopitals_rule` từ 0,14 lên 0,48, dù người học chưa làm hai bài này: bằng chứng được truyền theo cạnh tiên quyết (Hình 5). DKT cũng thay đổi dự đoán cho các khái niệm khác, nhưng qua vector ẩn chung và không theo cấu trúc tường minh. Trên đoạn chuỗi này, tỉ lệ dự đoán đúng bước kế tiếp của DKT (0,81) vẫn cao hơn GKT-Expert (0,74) và GKT-Stat (0,76): khả năng diễn giải của GKT không đi kèm độ chính xác cao hơn.
 
 ## 5. Thảo luận
 
-**RQ1.** Trên phần 0, GKT-Expert không vượt DKT. Các nguyên nhân khả dĩ: trạng thái 32 chiều cho mỗi khái niệm nhỏ hơn nhiều so với vector ẩn 64 chiều dùng chung của DKT; đồ thị Junyi là đồ thị bài tập với nhiều lỗi nhỏ; 113 khái niệm chỉ có trong đồ thị.
+**RQ1.** Trên phần 0, GKT-Expert không vượt DKT. Các nguyên nhân khả dĩ: trạng thái 32 chiều cho mỗi khái niệm nhỏ hơn nhiều so với vector ẩn 64 chiều dùng chung của DKT; mỗi bước GKT chỉ cập nhật khái niệm được trả lời và lân cận, trong khi DKT cập nhật toàn bộ trạng thái; đồ thị Junyi là đồ thị bài tập với nhiều lỗi nhỏ và 113 khái niệm chỉ có trong đồ thị.
 
-**RQ2 và câu hỏi phản biện thứ nhất.** Lợi thế của đồ thị chuyên gia so với đồ thị ngẫu nhiên là có nhưng nhỏ. Nếu đồ thị thống kê cho AUC cao hơn, điều đó không tự động phủ nhận tri thức sư phạm: đồ thị thống kê được suy từ chính hành vi mà tập đánh giá đo lường. ⟨Bổ sung kết quả GKT-Stat.⟩
+**RQ2 và câu hỏi phản biện thứ nhất.** Với cùng kiến trúc và số cạnh, đồ thị chuyên gia hơn đồ thị thống kê khoảng 0,003 AUC, còn đồ thị thống kê không hơn đồ thị ngẫu nhiên. Trên Junyi, tình huống "đồ thị thống kê cho AUC cao hơn" không xảy ra. Ngay cả khi xảy ra, điều đó cũng không tự động phủ nhận tri thức sư phạm, vì đồ thị thống kê được suy từ chính hành vi mà tập đánh giá đo lường; phép thử cần thiết là so sánh trên khái niệm giữ lại như trong bài báo.
 
-**RQ3 và câu hỏi phản biện thứ hai.** Thiết kế đánh giá công bằng gồm: cùng kiến trúc và số cạnh, đồ thị thống kê chỉ dựng từ tập huấn luyện, khái niệm giữ lại không có cạnh thống kê, đối chứng âm bằng đồ thị ngẫu nhiên và kiểm định ghép cặp trên cùng dự đoán.
+**RQ3 và câu hỏi phản biện thứ hai.** Khoảng cách giữa khái niệm còn lại và khái niệm giữ lại của GKT-Stat (0,0396) bằng của GKT-Random (0,0395), nên không có bằng chứng về rò rỉ gián tiếp. Thiết kế đánh giá công bằng gồm: cùng kiến trúc và số cạnh, đồ thị thống kê chỉ dựng từ tập huấn luyện, khái niệm giữ lại không có cạnh thống kê, đối chứng âm bằng đồ thị ngẫu nhiên, và kiểm định ghép cặp trên cùng dự đoán. Các hiệu AUC khoảng 0,003 đều có p < 10⁻⁴ (Bảng VI), nhưng kiểm định DeLong bỏ qua tương quan trong cùng người học, nên cần xác nhận bằng nhiều phần dữ liệu và hạt giống.
 
 **Hạn chế.** Mới chạy một phần dữ liệu với một hạt giống nên chưa có độ lệch chuẩn; kiểm định DeLong bỏ qua tương quan trong cùng người học; đồ thị chỉ có một loại cạnh. Hướng phát triển gồm chạy đủ 5 phần với bootstrap theo người học, học cấu trúc đồ thị với đồ thị chuyên gia làm tiên nghiệm, đồ thị nhiều loại cạnh theo SKT [@skt], và kết hợp cơ chế chú ý với lan truyền trên đồ thị.
 
 ## 6. Kết luận
 
-Bài báo xây dựng GKT lan truyền hai chiều và một giao thức tách bạch đóng góp của tri thức chuyên gia khỏi tri thức thống kê trên dữ liệu Junyi. Đồ thị tiên quyết chuyên gia có ích nhưng ít, không đủ để vượt DKT; dữ liệu hành vi không phân biệt được chiều tiên quyết. ⟨Kết luận về GKT-Stat và RQ3.⟩ Mã nguồn và quy trình tái lập: https://github.com/Trilosphan/GraphK.
+Bài báo xây dựng GKT lan truyền hai chiều và một giao thức tách bạch đóng góp của tri thức chuyên gia khỏi tri thức thống kê trên dữ liệu Junyi. Đồ thị tiên quyết chuyên gia mang thông tin thật: hơn đồ thị thống kê và đồ thị ngẫu nhiên cùng số cạnh khoảng 0,003 AUC, kể cả trên khái niệm giữ lại. Đồ thị thống kê không hơn đồ thị ngẫu nhiên và không cho thấy dấu hiệu rò rỉ. Tuy vậy, lợi ích này nhỏ và không đủ để GKT vượt DKT; dữ liệu hành vi cũng không phân biệt được chiều tiên quyết. Mã nguồn và quy trình tái lập: https://github.com/Trilosphan/GraphK.
 
 ## Phụ lục
 

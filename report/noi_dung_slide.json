@@ -2,22 +2,22 @@
   "van_de": "Junyi Academy có bản đồ tiên quyết do đội ngũ sư phạm xác nhận, nhưng DKT/AKT bỏ qua cấu trúc này, còn các mô hình đồ thị hiện có lại tự suy đồ thị từ dữ liệu.",
   "do_thi_tach_roi": "Đồ thị thống kê và đồ thị chuyên gia trùng khoảng 1% cạnh (Jaccard ≈ 0,01): hai nguồn tri thức gần như tách rời, nên so sánh GKT-Expert với GKT-Stat có ý nghĩa.",
   "hinh2": "Trung vị giá trị gia tăng của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau, chỉ nhỉnh hơn mặt bằng (0,013).",
-  "tieu_de_ket_qua": "GKT-Expert: AUC 0,795 trên tập kiểm tra (sơ bộ)",
-  "ket_qua_chinh": "GKT-Expert: AUC 0,7946, ACC 0,8505, RMSE 0,3350 trên 38.375 người học của tập kiểm tra, sau 10 epoch. Đang chạy: GKT-Stat, GKT-Random, DKT, AKT, cập nhật bảng khi xong.",
-  "truc_auc_min": 0.7,
-  "truc_auc_max": 0.82,
-  "tieu_de_rq3": "Khái niệm giữ lại: AUC thấp hơn ~0,035 (sơ bộ)",
-  "rq3": "GKT-Expert: AUC 0,7599 trên 108 khái niệm giữ lại, so với 0,7946 trên toàn tập. Đây là mốc để so với GKT-Stat: trên các khái niệm này đồ thị thống kê không có cạnh nào, nên nếu lợi thế của GKT-Stat (nếu có) biến mất ở đây thì đó là dấu hiệu rò rỉ gián tiếp. ⟨Cập nhật khi GKT-Stat chạy xong⟩",
+  "tieu_de_ket_qua": "Đồ thị chuyên gia hơn thống kê và ngẫu nhiên, nhưng DKT cao nhất",
+  "ket_qua_chinh": "Cùng kiến trúc, cùng 979 cạnh: GKT-Expert hơn GKT-Stat 0,0027 và GKT-Random 0,0030 AUC; GKT-Stat ≈ GKT-Random (+0,0002). DKT không dùng đồ thị vẫn cao nhất (0,7993, hơn GKT-Expert 0,005). AKT đang huấn luyện.",
+  "truc_auc_min": 0.74,
+  "truc_auc_max": 0.81,
+  "tieu_de_rq3": "Khái niệm giữ lại: không có dấu hiệu rò rỉ",
+  "rq3": "Mọi mô hình giảm khoảng 0,04 AUC trên 108 khái niệm giữ lại, kể cả DKT, nên mức giảm do khái niệm khó hơn chứ không do đồ thị. Khoảng cách của GKT-Stat (0,0396) bằng GKT-Random (0,0395): đồ thị thống kê không tạo lợi thế ở nơi nó có cạnh. GKT-Expert vẫn hơn GKT-Random 0,0035 trên khái niệm giữ lại.",
   "cat_bo": "Đang chạy: GKT-Expert với nút gốc ảo cho nút cô lập, và GKT-Expert chỉ lan truyền chiều xuôi. ⟨Cập nhật khi xong⟩",
   "case_study": [
-    "Trước khi người học làm derivatives_1 (bước 16), GKT-Expert dự đoán mức thành thạo khái niệm này rất thấp; chuỗi trả lời đúng nâng nó lên ngay",
-    "Khi người học làm đúng power_rule (bước 24), mức thành thạo dự đoán của quotient_rule và lhopitals_rule tăng theo, dù chưa làm hai bài này (bước 32, 42): lan truyền theo cạnh tiên quyết",
-    "Dự đoán đúng 74% bước kế tiếp trong đoạn; so sánh với GKT-Stat và DKT sẽ bổ sung khi hai mô hình chạy xong"
+    "Bước 24, làm đúng power_rule: GKT-Expert nâng quotient_rule từ 0,33 lên 0,71 và lhopitals_rule từ 0,14 lên 0,48, dù người học chưa làm hai bài này",
+    "DKT cũng đổi dự đoán của khái niệm khác, nhưng qua vector ẩn chung, không theo cạnh tiên quyết",
+    "Dự đoán đúng bước kế tiếp trong đoạn: DKT 0,81, GKT-Stat 0,76, GKT-Expert 0,74; diễn giải được không đồng nghĩa chính xác hơn"
   ],
   "phan_bien": [
     [
       "Nếu đồ thị thống kê cho AUC cao hơn, có phủ nhận giá trị của tri thức sư phạm?",
-      "Không tự động phủ nhận: đồ thị thống kê được suy ra từ chính hành vi làm bài mà tập đánh giá đo lường, nên có thể chỉ khớp phân phối đó. Phép thử quyết định là AUC trên 108 khái niệm giữ lại, nơi đồ thị thống kê không có cạnh. ⟨Bổ sung số liệu GKT-Stat⟩"
+      "Trên Junyi, điều này không xảy ra: GKT-Stat thấp hơn GKT-Expert 0,0027 và chỉ ngang đồ thị ngẫu nhiên. Nếu xảy ra cũng không tự động phủ nhận tri thức sư phạm, vì đồ thị thống kê suy từ chính hành vi mà tập đánh giá đo lường; cần so trên khái niệm giữ lại."
     ],
     [
       "Thiết kế đánh giá nào cho phép so sánh công bằng giữa hai loại đồ thị?",
@@ -37,9 +37,9 @@
     "Kết hợp chú ý (AKT) với lan truyền trên đồ thị"
   ],
   "ket_luan": [
-    "Đồ thị tiên quyết chuyên gia của Junyi có lỗi nhỏ (1 chu trình, 2 vòng tự thân) và gần như không trùng với tương quan hành vi (Jaccard ≈ 0,01)",
-    "GKT lan truyền hai chiều đạt AUC 0,795 trên tập kiểm tra; so sánh với GKT-Stat, GKT-Random, DKT, AKT đang hoàn tất",
-    "Giao thức chống rò rỉ (đồ thị thống kê chỉ từ tập huấn luyện, 108 khái niệm giữ lại) là đóng góp phương pháp chính"
+    "Đồ thị tiên quyết chuyên gia mang thông tin thật: hơn đồ thị thống kê và ngẫu nhiên cùng số cạnh khoảng 0,003 AUC, kể cả trên khái niệm giữ lại",
+    "Đồ thị thống kê không hơn đồ thị ngẫu nhiên và không có dấu hiệu rò rỉ gián tiếp",
+    "Lợi ích nhỏ, chưa đủ để GKT vượt DKT (0,7993 so với 0,7946); cần nhiều phần dữ liệu và hạt giống để khẳng định"
   ],
   "ghi_chu": {
     "bia": "Giới thiệu đề tài: Đồ án 8, GKT trên đồ thị tiên quyết tường minh của Junyi Academy.",
@@ -51,13 +51,13 @@
     "kien_truc": "Một bước cập nhật: thông điệp tự thân cho khái niệm được trả lời, thông điệp xuôi tới khái niệm phụ thuộc, thông điệp ngược tới khái niệm tiên quyết; cổng xóa–thêm rồi GRU.",
     "ba_do_thi": "Giữ nguyên kiến trúc và số cạnh, chỉ đổi nguồn tri thức. Đồ thị thống kê dùng giá trị gia tăng và chỉ dựng từ tập huấn luyện.",
     "hinh2": "Bên trái: phân phối bậc; bên phải: giá trị gia tăng theo nhóm cặp khái niệm.",
-    "ket_qua": "Kết quả sơ bộ: mới có GKT-Expert. Các mô hình còn lại đang huấn luyện trên Colab, sẽ cập nhật biểu đồ và bảng.",
+    "ket_qua": "Bốn mô hình đã có kết quả trên phần 0; AKT đang huấn luyện. Nhấn mạnh so sánh cùng kiến trúc: chỉ thay nguồn đồ thị.",
     "rq3": "So sánh AUC toàn tập với AUC trên khái niệm giữ lại; khoảng cách ở GKT-Stat so với GKT-Expert là bằng chứng chính cho câu hỏi rò rỉ.",
     "cat_bo": "Hai biến thể cắt bỏ đang chạy.",
     "case1": "Đoạn chuỗi được chọn tất định: nhiều cạnh tiên quyết nhất, khái niệm phụ thuộc có cả đúng lẫn sai.",
     "case2": "Nhấn mạnh hiện tượng lan truyền: trạng thái của khái niệm phụ thuộc thay đổi trước khi người học làm khái niệm đó. Đây là điều DKT không biểu diễn tường minh.",
     "phan_bien": "Trả lời hai câu hỏi phản biện của đề bài bằng thiết kế đánh giá.",
     "han_che": "Các hạn chế chính và hướng mở rộng.",
-    "ket_luan": "Tóm tắt ba ý chính; nhấn mạnh phần nào là kết quả sơ bộ."
+    "ket_luan": "Tóm tắt ba ý chính; AKT và hai thí nghiệm cắt bỏ sẽ bổ sung."
   }
 }
