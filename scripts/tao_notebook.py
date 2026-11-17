@@ -392,8 +392,9 @@ NB04 = notebook([
 GKT-Dense không có trong danh sách mặc định: với 835 nút, mỗi bước phải truyền thông điệp tới 834 nút, vượt bộ nhớ GPU T4 ở cỡ lô thông thường.
 
 **Chế độ chạy:**
-- `QUICK = True` (mặc định): chạy thử trên phần 0, mỗi mô hình 300 lô huấn luyện và 100 lô đánh giá, để kiểm tra lỗi và **ước lượng thời gian** cho một epoch đầy đủ.
-- `QUICK = False`: huấn luyện đầy đủ, có dừng sớm. Nếu phiên Colab bị ngắt, chạy lại notebook: mô hình học tiếp từ điểm kiểm tra gần nhất.
+- `QUICK = False` (mặc định): huấn luyện đầy đủ, tối đa `MAX_EPOCHS = 10` epoch, dừng sớm sau 3 epoch không cải thiện. Nếu phiên Colab bị ngắt, chạy lại notebook: mô hình học tiếp từ điểm kiểm tra gần nhất.
+- `QUICK = True`: chạy thử trên phần 0, mỗi mô hình 300 lô huấn luyện và 100 lô đánh giá, để kiểm tra lỗi và **ước lượng thời gian** cho một epoch đầy đủ.
+- `RUN_ABLATIONS = True` (mặc định): chạy thêm hai thí nghiệm cắt bỏ sau các thực nghiệm chính.
 
 **Cần GPU:** Runtime → Change runtime type → T4 GPU."""),
     code(SETUP),
@@ -408,10 +409,13 @@ print('torch', torch.__version__)"""),
 from pathlib import Path
 
 PROC = Path(DRIVE) / 'processed' / 'junyi'
-QUICK = True                  # True: chạy thử ước lượng thời gian; False: huấn luyện đầy đủ
+QUICK = False                 # True: chạy thử ước lượng thời gian; False: huấn luyện đầy đủ
 FOLDS = [0]                   # chạy đầy đủ: [0, 1, 2, 3, 4]
 SEED = 42
 BATCH_SIZE = 128
+# Giới hạn 10 epoch cho mọi mô hình: GKT-Expert chỉ tăng ~0,0005 AUC kiểm định mỗi epoch từ epoch 4,
+# điều kiện dừng sớm (3 epoch không cải thiện) không kích hoạt, 20 epoch làm phần 0 kéo dài ~24 giờ T4.
+MAX_EPOCHS = 10
 
 GKT_KW = {'hidden': 32, 'emb': 32, 'dropout': 0.1, 'bidirectional': True, 'norm': 'row', 'isolated': 'self'}
 # (mô hình, đồ thị, tham số mô hình, cấu hình riêng của thực nghiệm)
@@ -425,7 +429,7 @@ EXPERIMENTS = [
 ]
 
 # Nghiên cứu cắt bỏ (Bảng 2 của báo cáo), chạy trên phần 0 sau các thực nghiệm chính
-RUN_ABLATIONS = False
+RUN_ABLATIONS = True
 ABLATIONS = [
     ('gkt', 'expert', {**GKT_KW, 'isolated': 'root'}, {'tag': 'root'}),          # nút gốc ảo cho nút cô lập
     ('gkt', 'expert', {**GKT_KW, 'bidirectional': False}, {'tag': 'unidir'}),    # chỉ lan truyền chiều xuôi
@@ -446,7 +450,7 @@ data = load_processed(PROC)
 results, failed = [], []
 for fold in FOLDS:
     for model, graph, kw, extra in EXPERIMENTS:
-        opts = {'batch_size': BATCH_SIZE, **(QUICK_LIMITS if QUICK else {}), **extra}
+        opts = {'batch_size': BATCH_SIZE, **(QUICK_LIMITS if QUICK else {'max_epochs': MAX_EPOCHS}), **extra}
         cfg = Config(proc_dir=str(PROC), runs_dir=str(RUNS), model=model, graph=graph, fold=fold, seed=SEED,
                      model_kwargs=kw, **opts)
         try:
