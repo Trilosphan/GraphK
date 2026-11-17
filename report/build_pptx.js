@@ -372,8 +372,8 @@ if (STEP) {
     const head = !keys || color;
     if (color && yy > 2) yy += 0.08;
     text(s, label, { x: M + 0.25, y: yy, w: 5.6, h: 0.28, fontSize: head ? 15 : 12, bold: !!head, color: color || HEX.dk2 });
-    yy += head ? 0.34 : 0.27;
-    (keys || []).forEach((k) => { yy += formula(s, k, M + 0.45, yy, 13, 5.4) + 0.04; });
+    yy += head ? 0.36 : 0.28;
+    (keys || []).forEach((k) => { yy += formula(s, k, M + 0.45, yy, 15, 5.4) + 0.06; });
   });
   // bảng trước / sau cho khái niệm được trả lời và các lân cận trong chuỗi
   const nb = [STEP.a, ...new Set((CS.chain || []).flatMap(([a, b]) => (a === STEP.a ? [b] : b === STEP.a ? [a] : [])))];
