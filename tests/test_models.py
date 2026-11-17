@@ -7,7 +7,7 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from graphk.models import build_model  # noqa: E402
-from graphk.models.gkt import BWD, FWD, add_virtual_root, neighbor_lists  # noqa: E402
+from graphk.models.gkt import add_virtual_root, neighbor_lists  # noqa: E402
 from graphk.preprocess import build_adjacency  # noqa: E402
 
 N = 6
@@ -15,17 +15,34 @@ ADJ = build_adjacency([(0, 1), (1, 2), (0, 3)], N)  # 4, 5 cô lập
 
 
 def test_neighbor_lists_directions_and_norm():
-    ptr, nbr, typ, w = neighbor_lists(ADJ, bidirectional=True, norm="row")
+    ptr, nbr, wf, wb = neighbor_lists(ADJ, bidirectional=True, norm="row")
     sl = lambda i: slice(int(ptr[i]), int(ptr[i + 1]))
-    # nút 0: phụ thuộc 1, 3 (FWD); không có tiên quyết
-    assert sorted(nbr[sl(0)].tolist()) == [1, 3] and set(typ[sl(0)].tolist()) == {FWD}
-    assert w[sl(0)].tolist() == [0.5, 0.5]
-    # nút 1: phụ thuộc 2 (FWD), tiên quyết 0 (BWD)
-    assert nbr[sl(1)].tolist() == [2, 0] and typ[sl(1)].tolist() == [FWD, BWD]
+    # nút 0: phụ thuộc 1, 3 (chiều xuôi); không có tiên quyết
+    assert sorted(nbr[sl(0)].tolist()) == [1, 3] and wf[sl(0)].tolist() == [0.5, 0.5] and wb[sl(0)].sum() == 0
+    # nút 1: phụ thuộc 2 (xuôi), tiên quyết 0 (ngược)
+    assert nbr[sl(1)].tolist() == [2, 0] and wf[sl(1)].tolist() == [1.0, 0.0] and wb[sl(1)].tolist() == [0.0, 1.0]
     # nút cô lập không có lân cận
     assert int(ptr[5] - ptr[4]) == 0
-    _, _, typ_uni, _ = neighbor_lists(ADJ, bidirectional=False)
-    assert (typ_uni == BWD).sum() == 0
+    _, _, _, wb_uni = neighbor_lists(ADJ, bidirectional=False)
+    assert wb_uni.sum() == 0
+
+
+def test_neighbor_lists_merge_bidirectional_pairs():
+    """Cặp cạnh hai chiều 0 <-> 1: mỗi lân cận chỉ xuất hiện một lần, mang cả hai trọng số."""
+    ptr, nbr, wf, wb = neighbor_lists(build_adjacency([(0, 1), (1, 0), (2, 0)], 3), norm="row")
+    sl = slice(int(ptr[0]), int(ptr[1]))
+    assert nbr[sl].tolist() == [1, 2]
+    assert wf[sl].tolist() == [1.0, 0.0] and wb[sl].tolist() == [0.5, 0.5]
+
+
+def test_gkt_bidirectional_pair_has_unique_updates():
+    torch.manual_seed(0)
+    model = build_model("gkt", 3, build_adjacency([(0, 1), (1, 0)], 3), hidden=8, emb=8, dropout=0.0)
+    q, r = torch.tensor([[0, 1, 0, 1]]), torch.tensor([[1, 0, 1, 1]])
+    out = model(q, r)
+    out.sum().backward()
+    assert torch.isfinite(out).all()
+    assert all(torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None)
 
 
 def test_virtual_root():

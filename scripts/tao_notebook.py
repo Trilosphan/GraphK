@@ -368,9 +368,11 @@ summary.to_csv(OUT / 'graph_summary.csv', index=False)
 !ls -la {OUT}"""),
 ])
 
-NB04 = notebook([
-    md("""\
-# 04 — Huấn luyện GKT và các mô hình cơ sở
+def make_nb04(only=None, title='04 — Huấn luyện GKT và các mô hình cơ sở', note=''):
+  return notebook([
+    md(f"""\
+# {title}
+{note}
 
 **Đầu vào:** kết quả của notebook 02 và 03.
 **Đầu ra:** `GraphK/runs/<tên thực nghiệm>/` gồm `config.json`, `last.pt` (điểm kiểm tra mỗi epoch), `best.pt`, `results.json`, `test_predictions.npz`.
@@ -396,7 +398,7 @@ GKT-Dense không có trong danh sách mặc định: với 835 nút, mỗi bư�
 - `QUICK = True`: chạy thử trên phần 0, mỗi mô hình 300 lô huấn luyện và 100 lô đánh giá, để kiểm tra lỗi và **ước lượng thời gian** cho một epoch đầy đủ.
 - `RUN_ABLATIONS = True` (mặc định): chạy thêm hai thí nghiệm cắt bỏ sau các thực nghiệm chính.
 
-**Cần GPU:** Runtime → Change runtime type → T4 GPU."""),
+**Cần GPU:** Runtime → Change runtime type → T4 GPU.""".replace('{{', '{').replace('}}', '}')),
     code(SETUP),
     md("## 0. Kiểm tra GPU"),
     code("""\
@@ -416,12 +418,14 @@ BATCH_SIZE = 128
 # Giới hạn 10 epoch cho mọi mô hình: GKT-Expert chỉ tăng ~0,0005 AUC kiểm định mỗi epoch từ epoch 4,
 # điều kiện dừng sớm (3 epoch không cải thiện) không kích hoạt, 20 epoch làm phần 0 kéo dài ~24 giờ T4.
 MAX_EPOCHS = 10
+ONLY = ONLY_VALUE             # None: mọi thực nghiệm; ví dụ ['gkt-stat'] để chỉ chạy GKT-Stat
 
 GKT_KW = {'hidden': 32, 'emb': 32, 'dropout': 0.1, 'bidirectional': True, 'norm': 'row', 'isolated': 'self'}
 # (mô hình, đồ thị, tham số mô hình, cấu hình riêng của thực nghiệm)
 EXPERIMENTS = [
     ('gkt', 'expert', GKT_KW, {}),
-    ('gkt', 'stat', GKT_KW, {}),
+    # tag 'gop': gộp cặp cạnh hai chiều (đồ thị thống kê có 130 cặp) thành một lân cận; bản trước cho NaN ở epoch 2
+    ('gkt', 'stat', GKT_KW, {'tag': 'gop'}),
     ('gkt', 'random', GKT_KW, {}),
     ('dkt', 'none', {'emb': 64, 'hidden': 64, 'dropout': 0.1}, {}),
     # AKT: cơ chế chú ý cần nhiều ma trận 200×200 mỗi head; cỡ lô 128 vượt 15 GB của T4
@@ -450,6 +454,8 @@ data = load_processed(PROC)
 results, failed = [], []
 for fold in FOLDS:
     for model, graph, kw, extra in EXPERIMENTS:
+        if ONLY and f'{model}-{graph}' not in ONLY:
+            continue
         opts = {'batch_size': BATCH_SIZE, **(QUICK_LIMITS if QUICK else {'max_epochs': MAX_EPOCHS}), **extra}
         cfg = Config(proc_dir=str(PROC), runs_dir=str(RUNS), model=model, graph=graph, fold=fold, seed=SEED,
                      model_kwargs=kw, **opts)
@@ -490,6 +496,20 @@ print('Số đoạn huấn luyện của một epoch đầy đủ:', n_train_seg
 summary"""),
 ], gpu=True)
 
+
+def _with_only(nb, only):
+    """Điền giá trị ONLY vào ô cấu hình."""
+    for c in nb.cells:
+        if c.cell_type == "code":
+            c.source = c.source.replace("ONLY_VALUE", repr(only))
+    return nb
+
+
+NB04 = _with_only(make_nb04(), None)
+NB04B = _with_only(make_nb04(
+    only=['gkt-stat'], title='04b — Huấn luyện riêng GKT-Stat (chạy song song với notebook 04)',
+    note='Bản sao của notebook 04 với `ONLY = [\'gkt-stat\']`, để chạy GKT-Stat trên một máy T4 thứ hai trong lúc notebook 04 chạy các thực nghiệm khác. Hai notebook ghi vào cùng `GraphK/runs/` nhưng khác thư mục thực nghiệm.'), ['gkt-stat'])
+
 NB05 = notebook([
     md("""\
 # 05 — Phân tích kết quả
@@ -520,7 +540,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 FOLD, SEED = 0, 42
 
 name = lambda model, graph, tag='': f'{model}-{graph}-fold{FOLD}-seed{SEED}-clip1' + (f'-{tag}' if tag else '')
-MAIN = {'GKT-Expert': name('gkt', 'expert'), 'GKT-Stat': name('gkt', 'stat'), 'GKT-Random': name('gkt', 'random'),
+MAIN = {'GKT-Expert': name('gkt', 'expert'), 'GKT-Stat': name('gkt', 'stat', 'gop'), 'GKT-Random': name('gkt', 'random'),
         'DKT': name('dkt', 'none'), 'AKT': name('akt', 'none')}
 ABL = {'GKT-Expert (hai chiều, tự cập nhật)': name('gkt', 'expert'),
        'GKT-Expert + nút gốc ảo': name('gkt', 'expert', 'root'),
@@ -728,6 +748,6 @@ CHECK = OUT / 'kiem_tra'
 if __name__ == "__main__":
     out = ROOT / "notebooks"
     out.mkdir(exist_ok=True)
-    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04), ("05_phan_tich.ipynb", NB05), ("06_xuat_bao_cao.ipynb", NB06)):
+    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04), ("04b_huan_luyen_stat.ipynb", NB04B), ("05_phan_tich.ipynb", NB05), ("06_xuat_bao_cao.ipynb", NB06)):
         nbf.write(nb, out / name)
         print("đã ghi", out / name)

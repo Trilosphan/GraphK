@@ -23,7 +23,6 @@ import scipy.sparse as sp
 import torch
 from torch import nn
 
-FWD, BWD = 1, 2
 
 
 def add_virtual_root(adj: sp.spmatrix) -> sp.csr_matrix:
@@ -41,25 +40,31 @@ def add_virtual_root(adj: sp.spmatrix) -> sp.csr_matrix:
 def neighbor_lists(adj: sp.spmatrix, bidirectional: bool = True, norm: str = "row"):
     """Danh sách lân cận dạng nén (CSR): lân cận của nút i nằm ở nbr[ptr[i]:ptr[i+1]].
 
-    Mỗi lân cận có loại cạnh FWD (i -> j, j phụ thuộc i) hoặc BWD (j -> i, j là tiên quyết của i)
-    và trọng số thông điệp. Không có ô đệm, nên chi phí mỗi bước tỉ lệ với bậc thực tế.
+    Mỗi lân cận j xuất hiện đúng một lần, kèm hai trọng số thông điệp:
+    w_fwd > 0 nếu có cạnh i -> j (j phụ thuộc i), w_bwd > 0 nếu có cạnh j -> i (j là tiên quyết của i).
+    Đồ thị thống kê có cặp cạnh hai chiều (A -> B và B -> A); gộp về một mục để mỗi nút chỉ được
+    cập nhật một lần trong một bước (index_put với chỉ số trùng cho kết quả không xác định).
+    Không có ô đệm, nên chi phí mỗi bước tỉ lệ với bậc thực tế.
     """
     a = sp.csr_matrix(adj)
     n = a.shape[0]
     at = a.T.tocsr()
-    ptr, nbr, typ, w = [0], [], [], []
+    ptr, nbr, wf, wb = [0], [], [], []
     for i in range(n):
-        f = a.indices[a.indptr[i]:a.indptr[i + 1]]
-        b = at.indices[at.indptr[i]:at.indptr[i + 1]] if bidirectional else np.array([], dtype=np.int64)
-        nbr += [*f.tolist(), *b.tolist()]
-        typ += [FWD] * len(f) + [BWD] * len(b)
+        f = a.indices[a.indptr[i]:a.indptr[i + 1]].tolist()
+        b = at.indices[at.indptr[i]:at.indptr[i + 1]].tolist() if bidirectional else []
         if norm == "row":
-            w += [1.0 / len(f) if len(f) else 0.0] * len(f) + [1.0 / len(b) if len(b) else 0.0] * len(b)
+            cf, cb = (1.0 / len(f) if f else 0.0), (1.0 / len(b) if b else 0.0)
         else:
-            w += [1.0] * (len(f) + len(b))
+            cf = cb = 1.0
+        fs, bs = set(f), set(b)
+        for j in f + [j for j in b if j not in fs]:   # chiều xuôi trước, rồi các tiên quyết chưa có
+            nbr.append(j)
+            wf.append(cf if j in fs else 0.0)
+            wb.append(cb if j in bs else 0.0)
         ptr.append(len(nbr))
     return (torch.tensor(ptr, dtype=torch.long), torch.tensor(nbr, dtype=torch.long),
-            torch.tensor(typ, dtype=torch.long), torch.tensor(w, dtype=torch.float32))
+            torch.tensor(wf, dtype=torch.float32), torch.tensor(wb, dtype=torch.float32))
 
 
 def mlp(d_in: int, d_out: int, dropout: float) -> nn.Sequential:
@@ -90,11 +95,11 @@ class GKT(nn.Module):
             raise ValueError(f"isolated phải là 'self' hoặc 'root', nhận {isolated!r}")
         self.n_nodes = n_nodes                 # số khái niệm thật (dùng để dự đoán)
         self.n_graph = adj.shape[0]            # số nút đồ thị (có thể thêm gốc ảo)
-        ptr, nbr, typ, w = neighbor_lists(adj, bidirectional, norm)
+        ptr, nbr, wf, wb = neighbor_lists(adj, bidirectional, norm)
         self.register_buffer("nbr_ptr", ptr)
         self.register_buffer("nbr", nbr)
-        self.register_buffer("nbr_typ", typ)
-        self.register_buffer("nbr_w", w)
+        self.register_buffer("nbr_wf", wf)
+        self.register_buffer("nbr_wb", wb)
         self.hidden = hidden
         self.resp_emb = nn.Embedding(2 * n_nodes, emb)
         self.node_emb = nn.Embedding(self.n_graph, emb)
@@ -117,10 +122,9 @@ class GKT(nn.Module):
         e_rows = torch.repeat_interleave(rows, deg)                            # (E_t,)
         first = torch.repeat_interleave(self.nbr_ptr[qt] - (torch.cumsum(deg, 0) - deg), deg)
         pos = first + torch.arange(e_rows.numel(), device=qt.device)
-        nb, typ, w = self.nbr[pos], self.nbr_typ[pos], self.nbr_w[pos]
+        nb, wf, wb = self.nbr[pos], self.nbr_wf[pos], self.nbr_wb[pos]
         nb_in = torch.cat([self_in[e_rows], h[e_rows, nb], self.node_emb(nb)], dim=-1)
-        m_nb = torch.where((typ == FWD).unsqueeze(-1), self.f_fwd(nb_in), self.f_bwd(nb_in))
-        m_nb = m_nb * w.unsqueeze(-1)
+        m_nb = wf.unsqueeze(-1) * self.f_fwd(nb_in) + wb.unsqueeze(-1) * self.f_bwd(nb_in)
 
         upd_rows = torch.cat([rows, e_rows])
         upd_nodes = torch.cat([qt, nb])

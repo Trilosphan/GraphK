@@ -179,8 +179,11 @@ def run(cfg: Config, data: dict | None = None, log=print) -> dict:
                 skipped += 1        # bỏ lô có mất mát không hữu hạn thay vì làm hỏng tham số
                 continue
             loss.backward()
-            if cfg.grad_clip:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
+            norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip or float("inf"))
+            if not torch.isfinite(norm):
+                skipped += 1        # gradient NaN/vô cực: bỏ bước, tránh làm hỏng toàn bộ tham số
+                opt.zero_grad()
+                continue
             opt.step()
             total += loss.item() * int(mask.sum())
             count += int(mask.sum())
