@@ -7,7 +7,7 @@ name = "graphk"
 version = "0.1.0"
 description = "Truy vết tri thức dựa trên đồ thị (GKT) với đồ thị tiên quyết tường minh — Đồ án 8"
 requires-python = ">=3.10"
-dependencies = ["numpy", "pandas", "scipy", "pyarrow"]
+dependencies = ["numpy", "pandas", "scipy", "pyarrow", "scikit-learn"]  # torch: dùng bản có sẵn trên Colab
 
 [project.optional-dependencies]
 dev = ["pytest"]

@@ -28,7 +28,7 @@ sys.path.insert(0, f'{REPO}/src')
 !git -C {REPO} log --oneline -1"""
 
 
-def notebook(cells):
+def notebook(cells, gpu: bool = False):
     nb = nbf.v4.new_notebook()
     nb.cells = cells
     nb.metadata = {
@@ -36,6 +36,9 @@ def notebook(cells):
         "language_info": {"name": "python"},
         "colab": {"provenance": []},
     }
+    if gpu:
+        nb.metadata["accelerator"] = "GPU"
+        nb.metadata["colab"]["gpuType"] = "T4"
     return nb
 
 
@@ -365,10 +368,105 @@ summary.to_csv(OUT / 'graph_summary.csv', index=False)
 !ls -la {OUT}"""),
 ])
 
+NB04 = notebook([
+    md("""\
+# 04 — Huấn luyện GKT và các mô hình cơ sở
+
+**Đầu vào:** kết quả của notebook 02 và 03.
+**Đầu ra:** `GraphK/runs/<tên thực nghiệm>/` gồm `config.json`, `last.pt` (điểm kiểm tra mỗi epoch), `best.pt`, `results.json`, `test_predictions.npz`.
+
+**Giao thức:** ở phần k, mô hình được huấn luyện trên các phần còn lại, dừng sớm theo AUC trên tập kiểm định (phần k), rồi đánh giá trên tập kiểm tra chung. Tập kiểm tra gồm 38.375 người học không tham gia huấn luyện hay xây dựng đồ thị.
+
+**Các thực nghiệm:**
+
+| Tên | Mô hình | Đồ thị |
+|---|---|---|
+| GKT-Expert | GKT lan truyền hai chiều | tiên quyết chuyên gia |
+| GKT-Stat | GKT lan truyền hai chiều | thống kê (của phần k) |
+| GKT-Random | GKT lan truyền hai chiều | ngẫu nhiên, cùng số cạnh |
+| DKT | LSTM | không dùng đồ thị |
+| AKT | Transformer (cài đặt của pyKT) | không dùng đồ thị |
+
+GKT-Dense không có trong danh sách mặc định: với 835 nút, mỗi bước phải truyền thông điệp tới 834 nút, vượt bộ nhớ GPU T4 ở cỡ lô thông thường.
+
+**Chế độ chạy:**
+- `QUICK = True` (mặc định): chạy thử trên phần 0, mỗi mô hình 300 lô huấn luyện và 100 lô đánh giá, để kiểm tra lỗi và **ước lượng thời gian** cho một epoch đầy đủ.
+- `QUICK = False`: huấn luyện đầy đủ, có dừng sớm. Nếu phiên Colab bị ngắt, chạy lại notebook: mô hình học tiếp từ điểm kiểm tra gần nhất.
+
+**Cần GPU:** Runtime → Change runtime type → T4 GPU."""),
+    code(SETUP),
+    md("## 0. Kiểm tra GPU"),
+    code("""\
+import torch
+!nvidia-smi --query-gpu=name,memory.total --format=csv
+assert torch.cuda.is_available(), 'Chưa bật GPU: Runtime → Change runtime type → T4 GPU'
+print('torch', torch.__version__)"""),
+    md("## 1. Cấu hình"),
+    code("""\
+from pathlib import Path
+
+PROC = Path(DRIVE) / 'processed' / 'junyi'
+QUICK = True                  # True: chạy thử ước lượng thời gian; False: huấn luyện đầy đủ
+FOLDS = [0]                   # chạy đầy đủ: [0, 1, 2, 3, 4]
+SEED = 42
+BATCH_SIZE = 128
+
+GKT_KW = {'hidden': 32, 'emb': 32, 'dropout': 0.1, 'bidirectional': True, 'norm': 'row', 'isolated': 'self'}
+EXPERIMENTS = [
+    ('gkt', 'expert', GKT_KW),
+    ('gkt', 'stat', GKT_KW),
+    ('gkt', 'random', GKT_KW),
+    ('dkt', 'none', {'emb': 64, 'hidden': 64, 'dropout': 0.1}),
+    ('akt', 'none', {'d_model': 256, 'n_blocks': 4, 'dropout': 0.2}),
+]
+
+RUNS = Path(DRIVE) / ('runs_thu' if QUICK else 'runs')
+QUICK_LIMITS = {'max_epochs': 1, 'max_train_batches': 300, 'max_eval_batches': 100}"""),
+    md("## 2. Huấn luyện"),
+    code("""\
+from graphk.graphs import load_processed
+from graphk.train import Config, run
+
+data = load_processed(PROC)
+results = []
+for fold in FOLDS:
+    for model, graph, kw in EXPERIMENTS:
+        cfg = Config(proc_dir=str(PROC), runs_dir=str(RUNS), model=model, graph=graph, fold=fold, seed=SEED,
+                     batch_size=BATCH_SIZE, model_kwargs=kw, **(QUICK_LIMITS if QUICK else {}))
+        results.append(run(cfg, data))
+        torch.cuda.empty_cache()"""),
+    md("## 3. Tổng hợp"),
+    code("""\
+import math
+import pandas as pd
+from graphk.train import segment_indices
+
+n_train_batches = math.ceil(len(segment_indices(
+    data['sequences'], data['splits'].loc[(data['splits'].split != 'test') & (data['splits'].split != '0'), 'user_id'])) / BATCH_SIZE)
+rows = []
+for res in results:
+    h = res['history'][-1]
+    n_batches = res['config']['max_train_batches'] or n_train_batches
+    rows.append({
+        'thực nghiệm': res['name'],
+        'epoch': res['epochs'],
+        'AUC kiểm định': res['best_val_auc'],
+        'AUC kiểm tra': res['test']['all']['auc'],
+        'AUC khái niệm giữ lại': res['test']['heldout']['auc'],
+        'ACC kiểm tra': res['test']['all']['acc'],
+        'giây/lô': h['train_seconds'] / n_batches,
+        'phút/epoch đầy đủ (ước tính)': h['train_seconds'] / n_batches * n_train_batches / 60,
+    })
+summary = pd.DataFrame(rows)
+summary.to_csv(RUNS / 'tong_hop.csv', index=False)
+print('Số lô huấn luyện của một epoch đầy đủ:', n_train_batches)
+summary"""),
+], gpu=True)
+
 
 if __name__ == "__main__":
     out = ROOT / "notebooks"
     out.mkdir(exist_ok=True)
-    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03)):
+    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04)):
         nbf.write(nb, out / name)
         print("đã ghi", out / name)
