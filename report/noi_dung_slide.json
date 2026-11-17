@@ -3,8 +3,8 @@
   "do_thi_tach_roi": "Đồ thị thống kê và đồ thị chuyên gia trùng khoảng 1% cạnh (Jaccard ≈ 0,01): hai nguồn tri thức gần như tách rời, nên so sánh GKT-Expert với GKT-Stat có ý nghĩa.",
   "hinh2": "Trung vị giá trị gia tăng của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau, chỉ nhỉnh hơn mặt bằng (0,013).",
   "tieu_de_ket_qua": "Chuyên gia > thống kê ≈ ngẫu nhiên; DKT cao nhất",
-  "ket_qua_chinh": "Cùng kiến trúc, cùng 979 cạnh: GKT-Expert hơn GKT-Stat 0,0027 và GKT-Random 0,0030 AUC; GKT-Stat ≈ GKT-Random (+0,0002). DKT không dùng đồ thị vẫn cao nhất (0,7993, hơn GKT-Expert 0,005). AKT đang huấn luyện.",
-  "truc_auc_min": 0.74,
+  "ket_qua_chinh": "Cùng kiến trúc, cùng 979 cạnh: GKT-Expert hơn GKT-Stat 0,0027 và GKT-Random 0,0030 AUC; GKT-Stat ≈ GKT-Random (+0,0002). DKT không dùng đồ thị cao nhất (0,7993). AKT 0,7680: huấn luyện chưa ổn định với tốc độ học chung 10⁻³.",
+  "truc_auc_min": 0.72,
   "truc_auc_max": 0.81,
   "tieu_de_rq3": "Khái niệm giữ lại: không có dấu hiệu rò rỉ",
   "rq3": "Mọi mô hình giảm khoảng 0,04 AUC trên 108 khái niệm giữ lại, kể cả DKT, nên mức giảm do khái niệm khó hơn chứ không do đồ thị. Khoảng cách của GKT-Stat (0,0396) bằng GKT-Random (0,0395): đồ thị thống kê không tạo lợi thế ở nơi nó có cạnh. GKT-Expert vẫn hơn GKT-Random 0,0035 trên khái niệm giữ lại.",
@@ -26,15 +26,16 @@
   ],
   "han_che": [
     "Mới chạy phần 0, một hạt giống: chưa có độ lệch chuẩn",
+    "AKT dùng chung tốc độ học 10⁻³, chưa ổn định (pyKT dùng 10⁻⁴)",
     "RQ4 (MOOCCubeX) chưa thực hiện",
     "Đồ thị Junyi là đồ thị bài tập, một loại cạnh",
     "DeLong bỏ qua tương quan trong cùng người học"
   ],
   "huong_phat_trien": [
     "Chạy đủ 5 phần, bootstrap theo người học",
+    "Tinh chỉnh AKT, thêm simpleKT",
     "Học cấu trúc với đồ thị chuyên gia làm tiên nghiệm",
-    "Đồ thị nhiều loại cạnh (theo SKT)",
-    "Kết hợp chú ý (AKT) với lan truyền trên đồ thị"
+    "Đồ thị nhiều loại cạnh (theo SKT)"
   ],
   "ket_luan": [
     "Đồ thị tiên quyết chuyên gia mang thông tin thật: hơn đồ thị thống kê và ngẫu nhiên cùng số cạnh khoảng 0,003 AUC, kể cả trên khái niệm giữ lại",
@@ -51,7 +52,7 @@
     "kien_truc": "Một bước cập nhật: thông điệp tự thân cho khái niệm được trả lời, thông điệp xuôi tới khái niệm phụ thuộc, thông điệp ngược tới khái niệm tiên quyết; cổng xóa–thêm rồi GRU.",
     "ba_do_thi": "Giữ nguyên kiến trúc và số cạnh, chỉ đổi nguồn tri thức. Đồ thị thống kê dùng giá trị gia tăng và chỉ dựng từ tập huấn luyện.",
     "hinh2": "Bên trái: phân phối bậc; bên phải: giá trị gia tăng theo nhóm cặp khái niệm.",
-    "ket_qua": "Bốn mô hình đã có kết quả trên phần 0; AKT đang huấn luyện. Nhấn mạnh so sánh cùng kiến trúc: chỉ thay nguồn đồ thị.",
+    "ket_qua": "Năm mô hình chính đã có kết quả trên phần 0. Nhấn mạnh so sánh cùng kiến trúc: chỉ thay nguồn đồ thị. AKT thấp do thiết lập huấn luyện chung, không kết luận về năng lực AKT.",
     "rq3": "So sánh AUC toàn tập với AUC trên khái niệm giữ lại; khoảng cách ở GKT-Stat so với GKT-Expert là bằng chứng chính cho câu hỏi rò rỉ.",
     "cat_bo": "Hai biến thể cắt bỏ đang chạy.",
     "case1": "Đoạn chuỗi được chọn tất định: nhiều cạnh tiên quyết nhất, khái niệm phụ thuộc có cả đúng lẫn sai.",

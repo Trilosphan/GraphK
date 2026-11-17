@@ -14,7 +14,7 @@
 - **Bối cảnh và vấn đề:** các mô hình truy vết tri thức tuần tự (DKT, AKT) không dùng đồ thị tiên quyết mà đội ngũ sư phạm của Junyi Academy đã xác nhận. Các mô hình dựa trên đồ thị hiện có lại dùng đồ thị suy ra từ dữ liệu, nên chưa ai tách riêng được giá trị của tri thức chuyên gia.
 - **Phương pháp:** GKT lan truyền hai chiều trên đồ thị tiên quyết có hướng: hàm thông điệp riêng cho chiều xuôi (tiên quyết → phụ thuộc) và chiều ngược, cài đặt bằng danh sách cạnh nén. Cùng một kiến trúc được huấn luyện trên ba đồ thị có cùng 979 cạnh: chuyên gia, thống kê (giá trị gia tăng, chỉ tính trên tập huấn luyện) và ngẫu nhiên.
 - **Thiết lập:** Junyi 2015 với 835 khái niệm, 191.874 người học và 25,85 triệu tương tác. Dữ liệu chia theo người học; tập kiểm tra gồm 38.375 người học. Đồ án dùng 108 khái niệm giữ lại để kiểm soát rò rỉ gián tiếp. Mô hình cơ sở là DKT và AKT. Độ đo là AUC, ACC, RMSE, kèm kiểm định DeLong ghép cặp.
-- **Kết quả chính (phần 0, tập kiểm tra):** DKT 0,7993 > GKT-Expert 0,7946 > GKT-Stat 0,7919 ≈ GKT-Random 0,7916 (AUC). Trên 108 khái niệm giữ lại: DKT 0,7656, GKT-Expert 0,7599, GKT-Stat 0,7566, GKT-Random 0,7565. AKT và hai thí nghiệm cắt bỏ đang chạy.
+- **Kết quả chính (phần 0, tập kiểm tra):** DKT 0,7993 > GKT-Expert 0,7946 > GKT-Stat 0,7919 ≈ GKT-Random 0,7916 (AUC). AKT 0,7680 (dừng sớm ở epoch 6, huấn luyện chưa ổn định với tốc độ học chung 10⁻³). Trên 108 khái niệm giữ lại: DKT 0,7656, GKT-Expert 0,7599, GKT-Stat 0,7566, GKT-Random 0,7565, AKT 0,7378. Hai thí nghiệm cắt bỏ đang chạy.
 - **Phát hiện về dữ liệu:**
   - đồ thị chuyên gia có một chu trình 3 nút và hai vòng tự thân;
   - đồ thị thống kê chỉ trùng khoảng 1% cạnh với đồ thị chuyên gia;
@@ -304,7 +304,7 @@ GraphK/
   | GKT-Expert | 0,7946 | 0,8505 | 0,3351 | 0,7599 |
   | GKT-Stat | 0,7919 | 0,8497 | 0,3359 | 0,7566 |
   | GKT-Random | 0,7916 | 0,8494 | 0,3362 | 0,7565 |
-  | AKT | đang chạy | | | |
+  | AKT | 0,7680 | 0,8435 | 0,3440 | 0,7378 |
 
   - DeLong ghép cặp: GKT-Expert − GKT-Stat = +0,0027, GKT-Expert − GKT-Random = +0,0030, GKT-Stat − GKT-Random = +0,0002, GKT-Expert − DKT = −0,0047 (đều p < 10⁻⁴; trên khái niệm giữ lại: +0,0033, +0,0035, +0,0002 với p = 0,024, −0,0057).
   - Lợi thế của GKT-Expert biến mất ở khái niệm cô lập trong đồ thị chuyên gia (0,8387 so với 0,8385 của GKT-Random), đúng cơ chế lan truyền.
@@ -312,6 +312,7 @@ GraphK/
 
 ### 4.4. Đối sánh và thảo luận (trả lời các câu hỏi phản biện)
 - **So với AKT:** đồ thị chuyên gia có bù được khoảng cách hiệu năng so với một mô hình chú ý mạnh hay không?
+  - **Kết quả thật:** GKT-Expert hơn AKT 0,027 AUC, nhưng AKT chưa được tinh chỉnh (AUC kiểm định tụt ở epoch 5, dừng sớm ở epoch 6), nên chưa kết luận được.
 - **Trường hợp GKT-Stat đạt AUC cao hơn GKT-Expert:**
   - Kết quả này không đủ để phủ nhận giá trị của tri thức sư phạm.
   - Đồ thị thống kê có thể chỉ khớp tốt hơn với chính phân phối hành vi mà tập đánh giá đo lường. Đây là một dạng rò rỉ thông tin gián tiếp.
