@@ -9,6 +9,7 @@ processed/junyi/stats.json, processed/junyi/graphs/graph_summary.csv (notebook 0
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import sys
 from pathlib import Path
@@ -16,7 +17,19 @@ from pathlib import Path
 import pandas as pd
 
 
+def no_nan(x):
+    """Đổi NaN/vô cực thành None để JSON chuẩn (JavaScript) đọc được."""
+    if isinstance(x, dict):
+        return {k: no_nan(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [no_nan(v) for v in x]
+    if isinstance(x, float) and not math.isfinite(x):
+        return None
+    return x
+
+
 def main(analysis: Path, proc: Path, report: Path) -> None:
+    # tom_tat.json do pandas ghi có thể chứa NaN (Python đọc được, JSON chuẩn thì không)
     tom_tat = json.loads((analysis / "tom_tat.json").read_text(encoding="utf-8"))
     stats = json.loads((proc / "stats.json").read_text(encoding="utf-8"))
     graphs = pd.read_csv(proc / "graphs" / "graph_summary.csv")
@@ -34,7 +47,7 @@ def main(analysis: Path, proc: Path, report: Path) -> None:
         "case_study": json.loads((analysis / "case_study.json").read_text(encoding="utf-8")),
     }
     (report / "data").mkdir(parents=True, exist_ok=True)
-    (report / "data" / "ket_qua.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    (report / "data" / "ket_qua.json").write_text(json.dumps(no_nan(out), ensure_ascii=False, indent=1, allow_nan=False), encoding="utf-8")
     (report / "figures").mkdir(parents=True, exist_ok=True)
     for f in analysis.glob("hinh*.png"):
         shutil.copy(f, report / "figures" / f.name)

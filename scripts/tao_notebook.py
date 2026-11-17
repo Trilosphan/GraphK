@@ -630,7 +630,10 @@ from graphk.train import segment_indices
 
 test_users = data['splits'].loc[data['splits'].split == 'test', 'user_id']
 seg, chain = select_case_study(data['sequences'], segment_indices(data['sequences'], test_users), adj_e)
-focus = sorted({c for e in chain for c in e})[:6]
+q_seg = data['sequences']['questions'][data['sequences']['offsets'][seg]:data['sequences']['offsets'][seg + 1]].tolist()
+in_chain = {c for e in chain for c in e}
+focus = sorted(in_chain, key=q_seg.index)[:8]   # theo thứ tự xuất hiện đầu tiên trong đoạn
+chain = [(int(a), int(b)) for a, b in chain if a in focus and b in focus]
 names = data['nodes'].set_index('node_id').loc[focus, 'exercise_name'].tolist()
 models = {k: load_trained(RUNS, MAIN[k], PROC, data) for k in ('GKT-Expert', 'GKT-Stat', 'DKT') if MAIN[k] in results}
 case = case_study_traces(models, data['sequences'], seg, focus)
@@ -640,7 +643,7 @@ case.update({'segment': int(seg), 'user_id': int(data['sequences']['seq_user'][s
 y_next = np.array(case['r'][1:])
 case['accuracy_next'] = {k: float(((np.array(v) >= 0.5) == y_next).mean()) for k, v in case['next_pred'].items()}
 print('Đoạn', seg, '| người học', case['user_id'], '| độ dài', len(case['q']))
-print('Cạnh tiên quyết trong đoạn:', [(names[focus.index(a)] if a in focus else a, names[focus.index(b)] if b in focus else b) for a, b in chain])
+print('Cạnh tiên quyết trong đoạn:', [(names[focus.index(a)], names[focus.index(b)]) for a, b in chain])
 print('Độ chính xác dự đoán bước kế tiếp:', case['accuracy_next'])
 plot_case_study(case, names, OUT / 'hinh5_case_study.png')
 (OUT / 'case_study.json').write_text(json.dumps(case, ensure_ascii=False, indent=1))
@@ -705,7 +708,9 @@ OUT.mkdir(parents=True, exist_ok=True)
     md("## 4. Báo cáo Word và slide seminar"),
     code("""\
 !NODE_PATH=report/node_modules node report/build_docx.js build/bao_cao.ast.json report/thong_tin.json report/figures {OUT}/BaoCao_GraphK.docx
-!NODE_PATH=report/node_modules node report/build_pptx.js report {OUT}/Seminar_GraphK.pptx"""),
+!NODE_PATH=report/node_modules node report/build_pptx.js report {OUT}/Seminar_GraphK.pptx
+# bỏ các mục thư mục trong tệp ZIP: Word/PowerPoint qua dịch vụ đám mây có thể từ chối mở tệp có các mục này
+!zip -dq {OUT}/BaoCao_GraphK.docx '*/' ; zip -dq {OUT}/Seminar_GraphK.pptx '*/' ; echo xong"""),
     md("## 5. Kết xuất ảnh để rà soát hiển thị"),
     code("""\
 CHECK = OUT / 'kiem_tra'

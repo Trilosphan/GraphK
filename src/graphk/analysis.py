@@ -229,7 +229,7 @@ def plot_graph_comparison(adj: dict, av_groups: dict, path: str | Path | None = 
     a1.set_title("Phân phối bậc")
     data = [np.asarray(v)[np.isfinite(v)] for v in av_groups.values()]
     a2.boxplot(data, showfliers=False)
-    a2.set_xticks(range(1, len(data) + 1), list(av_groups), fontsize=9)
+    a2.set_xticks(range(1, len(data) + 1), [k.replace(" (", "\n(") for k in av_groups], fontsize=9)
     a2.axhline(0, color="gray", linewidth=0.8); a2.set_ylabel("giá trị gia tăng AV"); a2.grid(alpha=0.3)
     a2.set_title("Giá trị gia tăng theo nhóm cặp khái niệm")
     fig.tight_layout()
