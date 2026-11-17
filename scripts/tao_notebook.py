@@ -412,12 +412,14 @@ SEED = 42
 BATCH_SIZE = 128
 
 GKT_KW = {'hidden': 32, 'emb': 32, 'dropout': 0.1, 'bidirectional': True, 'norm': 'row', 'isolated': 'self'}
+# (mô hình, đồ thị, tham số mô hình, cấu hình riêng của thực nghiệm)
 EXPERIMENTS = [
-    ('gkt', 'expert', GKT_KW),
-    ('gkt', 'stat', GKT_KW),
-    ('gkt', 'random', GKT_KW),
-    ('dkt', 'none', {'emb': 64, 'hidden': 64, 'dropout': 0.1}),
-    ('akt', 'none', {'d_model': 256, 'n_blocks': 4, 'dropout': 0.2}),
+    ('gkt', 'expert', GKT_KW, {}),
+    ('gkt', 'stat', GKT_KW, {}),
+    ('gkt', 'random', GKT_KW, {}),
+    ('dkt', 'none', {'emb': 64, 'hidden': 64, 'dropout': 0.1}, {}),
+    # AKT: cơ chế chú ý cần nhiều ma trận 200×200 mỗi head; cỡ lô 128 vượt 15 GB của T4
+    ('akt', 'none', {'d_model': 256, 'n_blocks': 4, 'dropout': 0.2}, {'batch_size': 64}),
 ]
 
 RUNS = Path(DRIVE) / ('runs_thu' if QUICK else 'runs')
@@ -427,25 +429,34 @@ QUICK_LIMITS = {'max_epochs': 1, 'max_train_batches': 300, 'max_eval_batches': 1
 from graphk.graphs import load_processed
 from graphk.train import Config, run
 
+import traceback
+
 data = load_processed(PROC)
-results = []
+results, failed = [], []
 for fold in FOLDS:
-    for model, graph, kw in EXPERIMENTS:
+    for model, graph, kw, extra in EXPERIMENTS:
+        opts = {'batch_size': BATCH_SIZE, **(QUICK_LIMITS if QUICK else {}), **extra}
         cfg = Config(proc_dir=str(PROC), runs_dir=str(RUNS), model=model, graph=graph, fold=fold, seed=SEED,
-                     batch_size=BATCH_SIZE, model_kwargs=kw, **(QUICK_LIMITS if QUICK else {}))
-        results.append(run(cfg, data))
-        torch.cuda.empty_cache()"""),
+                     model_kwargs=kw, **opts)
+        try:
+            results.append(run(cfg, data))
+        except Exception:
+            traceback.print_exc()
+            failed.append(cfg.name)
+        torch.cuda.empty_cache()
+print('Thực nghiệm lỗi:', failed or 'không có')"""),
     md("## 3. Tổng hợp"),
     code("""\
 import math
 import pandas as pd
 from graphk.train import segment_indices
 
-n_train_batches = math.ceil(len(segment_indices(
-    data['sequences'], data['splits'].loc[(data['splits'].split != 'test') & (data['splits'].split != '0'), 'user_id'])) / BATCH_SIZE)
+n_train_segments = len(segment_indices(
+    data['sequences'], data['splits'].loc[(data['splits'].split != 'test') & (data['splits'].split != '0'), 'user_id']))
 rows = []
 for res in results:
     h = res['history'][-1]
+    n_train_batches = math.ceil(n_train_segments / res['config']['batch_size'])
     n_batches = res['config']['max_train_batches'] or n_train_batches
     rows.append({
         'thực nghiệm': res['name'],
@@ -454,12 +465,13 @@ for res in results:
         'AUC kiểm tra': res['test']['all']['auc'],
         'AUC khái niệm giữ lại': res['test']['heldout']['auc'],
         'ACC kiểm tra': res['test']['all']['acc'],
+        'cỡ lô': res['config']['batch_size'],
         'giây/lô': h['train_seconds'] / n_batches,
         'phút/epoch đầy đủ (ước tính)': h['train_seconds'] / n_batches * n_train_batches / 60,
     })
 summary = pd.DataFrame(rows)
 summary.to_csv(RUNS / 'tong_hop.csv', index=False)
-print('Số lô huấn luyện của một epoch đầy đủ:', n_train_batches)
+print('Số đoạn huấn luyện của một epoch đầy đủ:', n_train_segments)
 summary"""),
 ], gpu=True)
 
