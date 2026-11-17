@@ -2,17 +2,27 @@
   "van_de": "Junyi Academy có bản đồ tiên quyết do đội ngũ sư phạm xác nhận, nhưng DKT/AKT bỏ qua cấu trúc này, còn các mô hình đồ thị hiện có lại tự suy đồ thị từ dữ liệu.",
   "do_thi_tach_roi": "Đồ thị thống kê và đồ thị chuyên gia trùng khoảng 1% cạnh (Jaccard ≈ 0,01): hai nguồn tri thức gần như tách rời, nên so sánh GKT-Expert với GKT-Stat có ý nghĩa.",
   "hinh2": "Trung vị giá trị gia tăng của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau, chỉ nhỉnh hơn mặt bằng (0,013).",
-  "tieu_de_ket_qua": "⟨Tiêu đề nêu kết quả chính⟩",
-  "ket_qua_chinh": "⟨Nhận xét kết quả chính⟩",
-  "truc_auc_min": 0.6,
-  "truc_auc_max": 0.85,
-  "tieu_de_rq3": "⟨Tiêu đề RQ3⟩",
-  "rq3": "⟨Nhận xét RQ3⟩",
-  "cat_bo": "⟨Nhận xét nghiên cứu cắt bỏ⟩",
-  "case_study": ["⟨Quan sát 1⟩", "⟨Quan sát 2⟩", "⟨Quan sát 3⟩"],
+  "tieu_de_ket_qua": "GKT-Expert đạt AUC 0,795 trên tập kiểm tra (kết quả sơ bộ)",
+  "ket_qua_chinh": "GKT-Expert: AUC 0,7946, ACC 0,8505, RMSE 0,3350 trên 38.375 người học của tập kiểm tra, sau 10 epoch. Đang chạy: GKT-Stat, GKT-Random, DKT, AKT, cập nhật bảng khi xong.",
+  "truc_auc_min": 0.7,
+  "truc_auc_max": 0.82,
+  "tieu_de_rq3": "Khái niệm giữ lại: AUC thấp hơn khoảng 0,035 (kết quả sơ bộ)",
+  "rq3": "GKT-Expert: AUC 0,7599 trên 108 khái niệm giữ lại, so với 0,7946 trên toàn tập. Đây là mốc để so với GKT-Stat: trên các khái niệm này đồ thị thống kê không có cạnh nào, nên nếu lợi thế của GKT-Stat (nếu có) biến mất ở đây thì đó là dấu hiệu rò rỉ gián tiếp. ⟨Cập nhật khi GKT-Stat chạy xong⟩",
+  "cat_bo": "Đang chạy: GKT-Expert với nút gốc ảo cho nút cô lập, và GKT-Expert chỉ lan truyền chiều xuôi. ⟨Cập nhật khi xong⟩",
+  "case_study": [
+    "Trước khi người học làm derivatives_1 (bước 16), GKT-Expert dự đoán mức thành thạo khái niệm này rất thấp; chuỗi trả lời đúng nâng nó lên ngay",
+    "Khi người học làm đúng power_rule (bước 24), mức thành thạo dự đoán của quotient_rule và lhopitals_rule tăng theo, dù chưa làm hai bài này (bước 32, 42): lan truyền theo cạnh tiên quyết",
+    "Dự đoán đúng 74% bước kế tiếp trong đoạn; so sánh với GKT-Stat và DKT sẽ bổ sung khi hai mô hình chạy xong"
+  ],
   "phan_bien": [
-    ["Nếu đồ thị thống kê cho AUC cao hơn, có phủ nhận giá trị của tri thức sư phạm?", "⟨Trả lời dựa trên kết quả⟩"],
-    ["Thiết kế đánh giá nào cho phép so sánh công bằng giữa hai loại đồ thị?", "Đánh giá trên khái niệm giữ lại: 108 khái niệm không có cạnh thống kê nào, đồ thị thống kê chỉ dựng từ tập huấn luyện của từng phần, đối chứng âm bằng đồ thị ngẫu nhiên cùng số cạnh, và kiểm định DeLong ghép cặp. ⟨Bổ sung kết quả⟩"]
+    [
+      "Nếu đồ thị thống kê cho AUC cao hơn, có phủ nhận giá trị của tri thức sư phạm?",
+      "Không tự động phủ nhận: đồ thị thống kê được suy ra từ chính hành vi làm bài mà tập đánh giá đo lường, nên có thể chỉ khớp phân phối đó. Phép thử quyết định là AUC trên 108 khái niệm giữ lại, nơi đồ thị thống kê không có cạnh. ⟨Bổ sung số liệu GKT-Stat⟩"
+    ],
+    [
+      "Thiết kế đánh giá nào cho phép so sánh công bằng giữa hai loại đồ thị?",
+      "Cùng kiến trúc, cùng 979 cạnh; đồ thị thống kê chỉ dựng từ tập huấn luyện của từng phần; 108 khái niệm giữ lại không có cạnh thống kê; đối chứng âm bằng đồ thị ngẫu nhiên; kiểm định DeLong ghép cặp trên cùng dự đoán."
+    ]
   ],
   "han_che": [
     "Mới chạy phần 0, một hạt giống: chưa có độ lệch chuẩn",
@@ -26,7 +36,11 @@
     "Đồ thị nhiều loại cạnh (theo SKT)",
     "Kết hợp chú ý (AKT) với lan truyền trên đồ thị"
   ],
-  "ket_luan": ["⟨Kết luận 1⟩", "⟨Kết luận 2⟩", "⟨Kết luận 3⟩"],
+  "ket_luan": [
+    "Đồ thị tiên quyết chuyên gia của Junyi có lỗi nhỏ (1 chu trình, 2 vòng tự thân) và gần như không trùng với tương quan hành vi (Jaccard ≈ 0,01)",
+    "GKT lan truyền hai chiều đạt AUC 0,795 trên tập kiểm tra; so sánh với GKT-Stat, GKT-Random, DKT, AKT đang hoàn tất",
+    "Giao thức chống rò rỉ (đồ thị thống kê chỉ từ tập huấn luyện, 108 khái niệm giữ lại) là đóng góp phương pháp chính"
+  ],
   "ghi_chu": {
     "bia": "Giới thiệu đề tài: Đồ án 8, GKT trên đồ thị tiên quyết tường minh của Junyi Academy.",
     "van_de": "Nêu ba câu hỏi nghiên cứu. RQ4 về MOOCCubeX nằm ngoài phạm vi kết quả.",
@@ -37,13 +51,13 @@
     "kien_truc": "Một bước cập nhật: thông điệp tự thân cho khái niệm được trả lời, thông điệp xuôi tới khái niệm phụ thuộc, thông điệp ngược tới khái niệm tiên quyết; cổng xóa–thêm rồi GRU.",
     "ba_do_thi": "Giữ nguyên kiến trúc và số cạnh, chỉ đổi nguồn tri thức. Đồ thị thống kê dùng giá trị gia tăng và chỉ dựng từ tập huấn luyện.",
     "hinh2": "Bên trái: phân phối bậc; bên phải: giá trị gia tăng theo nhóm cặp khái niệm.",
-    "ket_qua": "⟨Ghi chú kết quả chính⟩",
-    "rq3": "⟨Ghi chú RQ3⟩",
-    "cat_bo": "⟨Ghi chú cắt bỏ⟩",
+    "ket_qua": "Kết quả sơ bộ: mới có GKT-Expert. Các mô hình còn lại đang huấn luyện trên Colab, sẽ cập nhật biểu đồ và bảng.",
+    "rq3": "So sánh AUC toàn tập với AUC trên khái niệm giữ lại; khoảng cách ở GKT-Stat so với GKT-Expert là bằng chứng chính cho câu hỏi rò rỉ.",
+    "cat_bo": "Hai biến thể cắt bỏ đang chạy.",
     "case1": "Đoạn chuỗi được chọn tất định: nhiều cạnh tiên quyết nhất, khái niệm phụ thuộc có cả đúng lẫn sai.",
-    "case2": "⟨Ghi chú case study⟩",
-    "phan_bien": "⟨Ghi chú phản biện⟩",
+    "case2": "Nhấn mạnh hiện tượng lan truyền: trạng thái của khái niệm phụ thuộc thay đổi trước khi người học làm khái niệm đó. Đây là điều DKT không biểu diễn tường minh.",
+    "phan_bien": "Trả lời hai câu hỏi phản biện của đề bài bằng thiết kế đánh giá.",
     "han_che": "Các hạn chế chính và hướng mở rộng.",
-    "ket_luan": "⟨Ghi chú kết luận⟩"
+    "ket_luan": "Tóm tắt ba ý chính; nhấn mạnh phần nào là kết quả sơ bộ."
   }
 }

@@ -742,6 +742,12 @@ CHECK = OUT / 'kiem_tra'
 !cd {CHECK} && soffice --headless --convert-to pdf {OUT}/BaoCao_GraphK.docx > /dev/null && soffice --headless --convert-to pdf {OUT}/Seminar_GraphK.pptx > /dev/null
 !cd {CHECK} && pdftoppm -jpeg -r 60 BaoCao_GraphK.pdf docx && pdftoppm -jpeg -r 80 Seminar_GraphK.pdf slide && pdftoppm -jpeg -r 60 {OUT}/BaoCao_GraphK.pdf tex
 !ls {CHECK} | head -80"""),
+    md("## 6. Xem nhanh slide"),
+    code("""\
+from IPython.display import Image, display
+for f in sorted(CHECK.glob('slide-*.jpg')):
+    print(f.name)
+    display(Image(filename=str(f), width=900))"""),
 ])
 
 
