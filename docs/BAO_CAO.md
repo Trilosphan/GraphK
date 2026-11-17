@@ -4,7 +4,7 @@
 > Thực nghiệm: Google Colab, GPU NVIDIA T4 · Dữ liệu: Junyi Academy (bản 01/2015)
 > Thuật ngữ theo bảng đối chiếu trong `docs/DAN_Y.md`.
 
-<!-- TRẠNG THÁI: các mục đánh dấu ⟨KẾT QUẢ⟩ được điền sau khi notebook 04–05 chạy xong trên phần 0. -->
+<!-- Bảng và số liệu được điền tự động bởi report/dien_so_lieu.py từ report/data/ket_qua.json. Các đoạn ⟨…⟩ là phần nhận xét viết sau khi có kết quả. -->
 
 ---
 
@@ -106,6 +106,8 @@ Danh sách đầy đủ và phân tích từng công trình (phương pháp, d�
 
 **Đồ thị ngẫu nhiên (GKT-Random):** 979 cạnh có hướng chọn ngẫu nhiên đều, không có vòng tự thân, đóng vai trò đối chứng âm cho câu hỏi "chỉ cần có cấu trúc là đủ?".
 
+![Hình 2. Bên trái: phân phối bậc (vào + ra) của đồ thị chuyên gia, thống kê và ngẫu nhiên. Bên phải: giá trị gia tăng của cạnh chuyên gia theo chiều xuôi, chiều ngược, của cạnh thống kê và của mọi cặp đủ hỗ trợ (tập huấn luyện phần 0).](report/figures/hinh2_do_thi.png)
+
 **Đặc trưng so sánh của các đồ thị (phần 0):**
 
 | Đồ thị | Cạnh | Nút cô lập | Thành phần liên thông yếu | Jaccard có hướng với đồ thị chuyên gia |
@@ -120,6 +122,8 @@ Danh sách đầy đủ và phân tích từng công trình (phương pháp, d�
 - 221 trong số 331 nút cô lập của đồ thị thống kê là buộc phải cô lập: 108 khái niệm giữ lại và 113 khái niệm không có tương tác.
 
 ### 3.3. Mô hình GKT lan truyền hai chiều
+
+![Hình 1. Kiến trúc GKT lan truyền hai chiều. (a) Đồ thị tiên quyết quanh khái niệm i đang được trả lời. (b) Một bước cập nhật: thông điệp tự thân cho i, thông điệp ngược tới khái niệm tiên quyết p, thông điệp xuôi tới khái niệm phụ thuộc d; cổng xóa–thêm rồi GRU, chỉ cập nhật i và lân cận.](report/figures/hinh1_kien_truc.png)
 
 Mỗi khái niệm `j` có một trạng thái ẩn `h_j ∈ R^32`. Tại bước `t`, khi người học trả lời khái niệm `i` với kết quả `a_t`:
 
@@ -176,19 +180,51 @@ Các hàm `f_self`, `f_fwd`, `f_bwd` là MLP hai tầng với ReLU và dropout 0
 
 ### 4.2. Kết quả chính (Bảng 1)
 
-⟨KẾT QUẢ: Bảng 1 từ `analysis/bang1_ket_qua.csv`.⟩
+**Bảng 1.** Kết quả trên tập kiểm tra (38.375 người học), phần 0. AUC cao nhất in đậm.
+
+<!-- BANG1 -->
+
+⟨NHẬN XÉT BẢNG 1⟩
+
+![Hình 3. AUC kiểm định theo epoch của năm mô hình (phần 0).](report/figures/hinh3_duong_cong_hoc.png)
 
 ### 4.3. Nghiên cứu cắt bỏ (Bảng 2)
 
-⟨KẾT QUẢ: Bảng 2 từ `analysis/bang2_cat_bo.csv`.⟩
+**Bảng 2.** Các biến thể của GKT-Expert: xử lý nút cô lập (tự cập nhật hay nút gốc ảo) và lan truyền hai chiều hay một chiều.
+
+<!-- BANG2 -->
+
+⟨NHẬN XÉT BẢNG 2⟩
 
 ### 4.4. Khái niệm giữ lại và nhóm khái niệm (Bảng 3, Bảng 4)
 
-⟨KẾT QUẢ: Bảng 3, Bảng 4.⟩
+**Bảng 3.** AUC trên 108 khái niệm giữ lại (không có cạnh thống kê nào chạm vào) và trên các khái niệm còn lại.
+
+<!-- BANG3 -->
+
+![Hình 4. AUC trên toàn tập kiểm tra và trên khái niệm giữ lại theo từng mô hình.](report/figures/hinh4_auc_giu_lai.png)
+
+**Bảng 4.** AUC theo nhóm khái niệm đích: theo bậc trong đồ thị chuyên gia, và theo việc khái niệm có bị cô lập trong đồ thị thống kê hay không.
+
+<!-- BANG4 -->
+
+⟨NHẬN XÉT BẢNG 3, BẢNG 4⟩
 
 ### 4.5. Kiểm định ghép cặp
 
-⟨KẾT QUẢ: bảng DeLong.⟩
+**Bảng 5.** Kiểm định DeLong ghép cặp cho hiệu AUC (mô hình 1 − mô hình 2) trên cùng các dự đoán của tập kiểm tra.
+
+<!-- DELONG -->
+
+⟨NHẬN XÉT KIỂM ĐỊNH⟩
+
+### 4.6. Case study
+
+<!-- CASE -->
+
+![Hình 5. Case study: mức thành thạo dự đoán sau từng bước (màu) cho các khái niệm trong chuỗi tiên quyết, theo GKT-Expert, GKT-Stat và DKT. Dấu o: trả lời đúng, x: trả lời sai trên khái niệm của hàng đó.](report/figures/hinh5_case_study.png)
+
+⟨NHẬN XÉT CASE STUDY⟩
 
 ---
 
@@ -224,6 +260,29 @@ Chạy lần lượt trên Google Colab, mỗi notebook tự lấy mã mới nh�
 | 05 | phân tích, bảng, hình, kiểm định | khoảng 5 phút |
 
 Kiểm thử trên máy: `python -m pytest` (31 ca).
+
+## Phụ lục
+
+### Phụ lục A. Siêu tham số
+
+| Mô hình | Tham số chính | Cỡ lô | Tối ưu |
+|---|---|---|---|
+| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, tối đa 20 epoch, dừng sớm sau 3 epoch |
+| DKT | nhúng 64, LSTM 64, dropout 0,1 | 128 | như trên |
+| AKT | `d_model` 256, 4 khối, 8 head, dropout 0,2 (cài đặt pyKT) | 64 | như trên |
+| Đồ thị thống kê | ngưỡng thành thạo 0,5; hỗ trợ tối thiểu 50; ưu tiên 1 cạnh vào mỗi nút; 979 cạnh | — | — |
+
+### Phụ lục B. Cấu trúc kho mã
+
+| Thành phần | Nội dung |
+|---|---|
+| `src/graphk/preprocess.py` | tiền xử lý, đồ thị chuyên gia, thống kê đồ thị (DAG, chu trình) |
+| `src/graphk/graphs.py` | đồ thị thống kê (giá trị gia tăng), đồ thị ngẫu nhiên, khái niệm giữ lại |
+| `src/graphk/models/` | GKT hai chiều (CSR), DKT, AKT (chép từ pyKT) |
+| `src/graphk/train.py` | huấn luyện, dừng sớm, điểm kiểm tra, đánh giá |
+| `src/graphk/analysis.py` | bảng tổng hợp, AUC theo nhóm, DeLong, case study |
+| `notebooks/01–06` | quy trình trên Colab, sinh từ `scripts/tao_notebook.py` |
+| `report/` | sinh báo cáo LaTeX, Word và slide seminar |
 
 ## Tài liệu tham khảo
 

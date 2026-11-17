@@ -134,3 +134,105 @@ def pairwise_tests(preds: dict[str, dict[str, np.ndarray]], pairs: list[tuple[st
         r = delong_paired(da["y"][m], da["p"][m], db["p"][m])
         rows.append({"mô hình 1": a, "mô hình 2": b, "số dự đoán": int(m.sum()), **r})
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------- case study
+
+def select_case_study(seqs: dict, segments: np.ndarray, adj_expert: sp.spmatrix, min_len: int = 25,
+                      max_len: int = 60, max_scan: int = 20000) -> tuple[int, list[tuple[int, int]]]:
+    """Chọn tất định một đoạn trong tập kiểm tra minh họa tốt việc lan truyền theo cạnh tiên quyết.
+
+    Điểm của đoạn = số cạnh chuyên gia (u -> v) mà u xuất hiện trước v trong đoạn và kết quả trên v
+    có cả đúng lẫn sai. Lấy đoạn điểm cao nhất; hòa thì lấy đoạn ngắn hơn, rồi chỉ số nhỏ hơn.
+    """
+    a = sp.csr_matrix(adj_expert)
+    off = seqs["offsets"]
+    candidates = []
+    for s in np.sort(segments)[:max_scan]:
+        n = int(off[s + 1] - off[s])
+        if not (min_len <= n <= max_len):
+            continue
+        q = seqs["questions"][off[s]:off[s + 1]].astype(np.int64)
+        r = seqs["responses"][off[s]:off[s + 1]]
+        first = {}
+        for t, c in enumerate(q):
+            first.setdefault(int(c), t)
+        edges = [(u, int(v)) for u, tu in first.items() for v in a.indices[a.indptr[u]:a.indptr[u + 1]]
+                 if int(v) in first and first[int(v)] > tu and len(np.unique(r[q == v])) == 2]
+        if edges:
+            candidates.append((len(edges), -n, -int(s), edges))
+    if not candidates:
+        raise ValueError("Không tìm được đoạn phù hợp; nới min_len/max_len hoặc max_scan")
+    best = max(candidates, key=lambda c: c[:3])
+    return -best[2], best[3]
+
+
+def load_trained(runs_dir: str | Path, name: str, proc_dir: str | Path, data: dict):
+    """Tải mô hình tốt nhất (best.pt) của một thực nghiệm, ở chế độ đánh giá trên CPU."""
+    import torch
+    from graphk.models import build_model
+    from graphk.train import Config, load_graph
+    cfg_dict = json.loads((Path(runs_dir) / name / "config.json").read_text())
+    cfg = Config(**cfg_dict)
+    adj = load_graph(cfg, Path(proc_dir), data["adj_expert"])
+    model = build_model(cfg.model, len(data["nodes"]), adj, **cfg.model_kwargs)
+    model.load_state_dict(torch.load(Path(runs_dir) / name / "best.pt", map_location="cpu"))
+    return model.eval()
+
+
+def case_study_traces(models: dict, seqs: dict, segment: int, focus: list[int]) -> dict:
+    """Mức thành thạo dự đoán sau từng bước cho các khái niệm focus, theo từng mô hình."""
+    import torch
+    off = seqs["offsets"]
+    q = torch.from_numpy(seqs["questions"][off[segment]:off[segment + 1]].astype(np.int64))
+    r = torch.from_numpy(seqs["responses"][off[segment]:off[segment + 1]].astype(np.int64))
+    out = {"q": q.tolist(), "r": r.tolist(), "focus": list(map(int, focus)), "traces": {}, "next_pred": {}}
+    for label, m in models.items():
+        tr = m.trace(q, r).numpy()                            # (T, n_nodes): sau bước t
+        out["traces"][label] = tr[:, focus].T.round(4).tolist()  # (len(focus), T)
+        out["next_pred"][label] = tr[np.arange(len(q) - 1), q[1:].numpy()].round(4).tolist()
+    return out
+
+
+def plot_case_study(case: dict, names: list[str], path: str | Path | None = None):
+    """Bản đồ nhiệt mức thành thạo dự đoán (khái niệm focus × bước) cho từng mô hình."""
+    import matplotlib.pyplot as plt
+    labels = list(case["traces"])
+    T = len(case["q"])
+    fig, axes = plt.subplots(len(labels), 1, figsize=(11, 1.2 + 1.1 * len(labels) * max(1, len(names)) / 3),
+                             sharex=True, squeeze=False)
+    for ax, lab in zip(axes[:, 0], labels):
+        im = ax.imshow(np.array(case["traces"][lab]), aspect="auto", cmap="viridis", vmin=0, vmax=1)
+        for t, (c, a) in enumerate(zip(case["q"], case["r"])):
+            if c in case["focus"]:
+                ax.scatter(t, case["focus"].index(c), marker="o" if a else "x",
+                           color="white" if a else "red", s=28, linewidths=1.5)
+        ax.set_yticks(range(len(names)), names, fontsize=8)
+        ax.set_title(lab, fontsize=10, loc="left")
+    axes[-1, 0].set_xlabel("bước (o: trả lời đúng, x: trả lời sai trên khái niệm đang xét)")
+    fig.colorbar(im, ax=axes[:, 0].tolist(), label="P(trả lời đúng)", shrink=0.8)
+    if path:
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+    return fig
+
+
+def plot_graph_comparison(adj: dict, av_groups: dict, path: str | Path | None = None):
+    """Hình 2: phân phối bậc (vào + ra) của các đồ thị và phân phối giá trị gia tăng theo nhóm cạnh."""
+    import matplotlib.pyplot as plt
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4))
+    for label, m in adj.items():
+        b = sp.csr_matrix(m) > 0
+        deg = np.asarray(b.sum(0)).ravel() + np.asarray(b.sum(1)).ravel()
+        a1.hist(np.clip(deg, 0, 20), bins=np.arange(22) - 0.5, histtype="step", linewidth=1.8,
+                label=f"{label} (cô lập: {(deg == 0).sum()})")
+    a1.set_xlabel("bậc vào + bậc ra (cắt tại 20)"); a1.set_ylabel("số khái niệm"); a1.legend(); a1.grid(alpha=0.3)
+    a1.set_title("Phân phối bậc")
+    data = [np.asarray(v)[np.isfinite(v)] for v in av_groups.values()]
+    a2.boxplot(data, showfliers=False)
+    a2.set_xticks(range(1, len(data) + 1), list(av_groups), fontsize=9)
+    a2.axhline(0, color="gray", linewidth=0.8); a2.set_ylabel("giá trị gia tăng AV"); a2.grid(alpha=0.3)
+    a2.set_title("Giá trị gia tăng theo nhóm cặp khái niệm")
+    fig.tight_layout()
+    if path:
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+    return fig

@@ -1,0 +1,49 @@
+{
+  "van_de": "Junyi Academy có bản đồ tiên quyết do đội ngũ sư phạm xác nhận, nhưng DKT/AKT bỏ qua cấu trúc này, còn các mô hình đồ thị hiện có lại tự suy đồ thị từ dữ liệu.",
+  "do_thi_tach_roi": "Đồ thị thống kê và đồ thị chuyên gia trùng khoảng 1% cạnh (Jaccard ≈ 0,01): hai nguồn tri thức gần như tách rời, nên so sánh GKT-Expert với GKT-Stat có ý nghĩa.",
+  "hinh2": "Trung vị giá trị gia tăng của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau, chỉ nhỉnh hơn mặt bằng (0,013).",
+  "tieu_de_ket_qua": "⟨Tiêu đề nêu kết quả chính⟩",
+  "ket_qua_chinh": "⟨Nhận xét kết quả chính⟩",
+  "truc_auc_min": 0.6,
+  "truc_auc_max": 0.85,
+  "tieu_de_rq3": "⟨Tiêu đề RQ3⟩",
+  "rq3": "⟨Nhận xét RQ3⟩",
+  "cat_bo": "⟨Nhận xét nghiên cứu cắt bỏ⟩",
+  "case_study": ["⟨Quan sát 1⟩", "⟨Quan sát 2⟩", "⟨Quan sát 3⟩"],
+  "phan_bien": [
+    ["Nếu đồ thị thống kê cho AUC cao hơn, có phủ nhận giá trị của tri thức sư phạm?", "⟨Trả lời dựa trên kết quả⟩"],
+    ["Thiết kế đánh giá nào cho phép so sánh công bằng giữa hai loại đồ thị?", "Đánh giá trên khái niệm giữ lại: 108 khái niệm không có cạnh thống kê nào, đồ thị thống kê chỉ dựng từ tập huấn luyện của từng phần, đối chứng âm bằng đồ thị ngẫu nhiên cùng số cạnh, và kiểm định DeLong ghép cặp. ⟨Bổ sung kết quả⟩"]
+  ],
+  "han_che": [
+    "Mới chạy phần 0, một hạt giống: chưa có độ lệch chuẩn",
+    "RQ4 (MOOCCubeX) chưa thực hiện",
+    "Đồ thị Junyi là đồ thị bài tập, một loại cạnh",
+    "DeLong bỏ qua tương quan trong cùng người học"
+  ],
+  "huong_phat_trien": [
+    "Chạy đủ 5 phần, bootstrap theo người học",
+    "Học cấu trúc với đồ thị chuyên gia làm tiên nghiệm",
+    "Đồ thị nhiều loại cạnh (theo SKT)",
+    "Kết hợp chú ý (AKT) với lan truyền trên đồ thị"
+  ],
+  "ket_luan": ["⟨Kết luận 1⟩", "⟨Kết luận 2⟩", "⟨Kết luận 3⟩"],
+  "ghi_chu": {
+    "bia": "Giới thiệu đề tài: Đồ án 8, GKT trên đồ thị tiên quyết tường minh của Junyi Academy.",
+    "van_de": "Nêu ba câu hỏi nghiên cứu. RQ4 về MOOCCubeX nằm ngoài phạm vi kết quả.",
+    "bai_toan": "Truy vết tri thức: từ lịch sử (khái niệm, kết quả) dự đoán xác suất trả lời đúng ở bước kế tiếp. Ba họ mô hình.",
+    "du_lieu": "Các con số sau tiền xử lý notebook 02. Con số 835 khái niệm đến từ 837 dòng có 2 tên lặp.",
+    "do_thi": "Đồ thị chuyên gia có một chu trình 3 bài về căn thức và 2 vòng tự thân; đây là điểm không nhất quán của dữ liệu chuyên gia.",
+    "lien_quan": "Mỗi nhóm: hạn chế chung và cách GKT-Expert khắc phục, kèm thực nghiệm kiểm chứng tương ứng.",
+    "kien_truc": "Một bước cập nhật: thông điệp tự thân cho khái niệm được trả lời, thông điệp xuôi tới khái niệm phụ thuộc, thông điệp ngược tới khái niệm tiên quyết; cổng xóa–thêm rồi GRU.",
+    "ba_do_thi": "Giữ nguyên kiến trúc và số cạnh, chỉ đổi nguồn tri thức. Đồ thị thống kê dùng giá trị gia tăng và chỉ dựng từ tập huấn luyện.",
+    "hinh2": "Bên trái: phân phối bậc; bên phải: giá trị gia tăng theo nhóm cặp khái niệm.",
+    "ket_qua": "⟨Ghi chú kết quả chính⟩",
+    "rq3": "⟨Ghi chú RQ3⟩",
+    "cat_bo": "⟨Ghi chú cắt bỏ⟩",
+    "case1": "Đoạn chuỗi được chọn tất định: nhiều cạnh tiên quyết nhất, khái niệm phụ thuộc có cả đúng lẫn sai.",
+    "case2": "⟨Ghi chú case study⟩",
+    "phan_bien": "⟨Ghi chú phản biện⟩",
+    "han_che": "Các hạn chế chính và hướng mở rộng.",
+    "ket_luan": "⟨Ghi chú kết luận⟩"
+  }
+}

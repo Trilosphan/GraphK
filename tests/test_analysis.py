@@ -56,3 +56,14 @@ def test_results_table(tmp_path):
     (tmp_path / "x" / "results.json").write_text(json.dumps(res))
     t = results_table(load_results(tmp_path))
     assert t.loc[0, "phút huấn luyện"] == pytest.approx(3.0)
+
+
+def test_select_case_study_prefers_prerequisite_chains():
+    from graphk.analysis import select_case_study
+    adj = build_adjacency([(0, 1)], 3)
+    # đoạn 0: 1 xuất hiện trước 0 (không tính); đoạn 1: 0 rồi 1 với kết quả 1 lẫn lộn
+    q = [1, 0, 1, 2, 0, 1, 1, 2]
+    r = [1, 1, 1, 1, 1, 0, 1, 0]
+    seqs = {"questions": np.array(q), "responses": np.array(r), "offsets": np.array([0, 4, 8]), "seq_user": np.array([0, 1])}
+    seg, edges = select_case_study(seqs, np.array([0, 1]), adj, min_len=3, max_len=10)
+    assert seg == 1 and edges == [(0, 1)]

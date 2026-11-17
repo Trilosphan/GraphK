@@ -499,12 +499,14 @@ Các phân tích:
 3. **Bảng 3** — AUC trên tập khái niệm giữ lại và trên các khái niệm còn lại (RQ3).
 4. **Bảng 4** — AUC theo nhóm khái niệm: cô lập, bậc thấp, bậc cao trong đồ thị chuyên gia; khái niệm cô lập trong đồ thị thống kê.
 5. **Kiểm định DeLong ghép cặp** cho hiệu AUC giữa các mô hình, trên toàn tập kiểm tra và trên khái niệm giữ lại. Kiểm định giả định các dự đoán độc lập (bỏ qua tương quan trong cùng người học), và với hàng triệu dự đoán thì hiệu rất nhỏ cũng có ý nghĩa thống kê. Vì vậy cần đọc kèm độ lớn hiệu AUC.
-6. **Hình** — đường cong học (AUC kiểm định theo epoch), AUC toàn tập và AUC khái niệm giữ lại.
+6. **Hình** (theo kế hoạch hình của dàn ý): Hình 2 so sánh cấu trúc đồ thị, Hình 3 đường cong học, Hình 4 AUC trên khái niệm giữ lại, Hình 5 case study. Hình 1 (sơ đồ kiến trúc) được vẽ bằng `scripts/ve_so_do_kien_truc.py`.
+7. **Case study** — một người học trong tập kiểm tra làm bài trên một chuỗi tiên quyết; mức thành thạo dự đoán theo từng bước của GKT-Expert, GKT-Stat và DKT.
 
 Không cần GPU."""),
     code(SETUP),
     md("## 0. Cấu hình"),
     code("""\
+import json
 from pathlib import Path
 
 PROC = Path(DRIVE) / 'processed' / 'junyi'
@@ -586,7 +588,7 @@ for k, v in MAIN.items():
         ax.plot([e['epoch'] for e in h], [e['val']['all']['auc'] for e in h], marker='o', label=k)
 ax.set_xlabel('epoch'); ax.set_ylabel('AUC kiểm định'); ax.set_title('Đường cong học (phần 0)')
 ax.grid(alpha=0.3); ax.legend()
-fig.tight_layout(); fig.savefig(OUT / 'hinh1_duong_cong_hoc.png', dpi=150)
+fig.tight_layout(); fig.savefig(OUT / 'hinh3_duong_cong_hoc.png', dpi=150)
 
 fig, ax = plt.subplots(figsize=(7, 4))
 x = np.arange(len(b3))
@@ -596,9 +598,54 @@ ax.set_xticks(x, b3['mô hình'], rotation=15)
 lo = min(b3['AUC kiểm tra'].min(), b3['AUC khái niệm giữ lại'].min())
 ax.set_ylim(lo - 0.02, None); ax.set_ylabel('AUC'); ax.legend(); ax.grid(axis='y', alpha=0.3)
 ax.set_title('AUC trên toàn tập và trên khái niệm giữ lại')
-fig.tight_layout(); fig.savefig(OUT / 'hinh2_auc_giu_lai.png', dpi=150)
+fig.tight_layout(); fig.savefig(OUT / 'hinh4_auc_giu_lai.png', dpi=150)
 plt.show()"""),
-    md("## 7. Tóm tắt cho báo cáo"),
+    md("""\
+## 7. Hình 2 — Đồ thị chuyên gia, thống kê và ngẫu nhiên"""),
+    code("""\
+from graphk.graphs import load_processed, fold_users, interactions_of_users, mastery_matrices, added_value_scores, edge_set
+from graphk.analysis import plot_graph_comparison
+
+data = load_processed(PROC)
+adj_e = data['adj_expert']
+adj_s = sp.load_npz(PROC / 'graphs' / f'adj_stat_fold{FOLD}.npz')
+adj_r = sp.load_npz(PROC / 'graphs' / f'adj_random_fold{FOLD}.npz')
+u, qq, cc = interactions_of_users(data['sequences'], fold_users(data['splits'], FOLD))
+att, mas = mastery_matrices(u, qq, cc, len(data['nodes']), 0.5)
+av, _ = added_value_scores(att, mas, 50)
+ex = list(edge_set(adj_e))
+av_groups = {'chuyên gia (xuôi)': np.array([av[a, b] for a, b in ex]),
+             'chuyên gia (ngược)': np.array([av[b, a] for a, b in ex]),
+             'cạnh thống kê': np.array([av[a, b] for a, b in edge_set(adj_s)]),
+             'mọi cặp đủ hỗ trợ': av[np.isfinite(av)]}
+plot_graph_comparison({'chuyên gia': adj_e, 'thống kê': adj_s, 'ngẫu nhiên': adj_r}, av_groups, OUT / 'hinh2_do_thi.png')
+plt.show()"""),
+    md("""\
+## 8. Case study — Hình 5
+
+Chọn tất định một đoạn chuỗi dài 25–60 bước trong tập kiểm tra có nhiều cạnh tiên quyết chuyên gia nhất (khái niệm tiên quyết xuất hiện trước khái niệm phụ thuộc, và kết quả trên khái niệm phụ thuộc có cả đúng lẫn sai). Với mỗi mô hình, `trace` cho xác suất trả lời đúng mọi khái niệm sau từng bước."""),
+    code("""\
+from graphk.analysis import select_case_study, load_trained, case_study_traces, plot_case_study
+from graphk.train import segment_indices
+
+test_users = data['splits'].loc[data['splits'].split == 'test', 'user_id']
+seg, chain = select_case_study(data['sequences'], segment_indices(data['sequences'], test_users), adj_e)
+focus = sorted({c for e in chain for c in e})[:6]
+names = data['nodes'].set_index('node_id').loc[focus, 'exercise_name'].tolist()
+models = {k: load_trained(RUNS, MAIN[k], PROC, data) for k in ('GKT-Expert', 'GKT-Stat', 'DKT') if MAIN[k] in results}
+case = case_study_traces(models, data['sequences'], seg, focus)
+case.update({'segment': int(seg), 'user_id': int(data['sequences']['seq_user'][seg]), 'chain': chain,
+             'focus_names': names,
+             'q_names': data['nodes'].set_index('node_id').loc[case['q'], 'exercise_name'].tolist()})
+y_next = np.array(case['r'][1:])
+case['accuracy_next'] = {k: float(((np.array(v) >= 0.5) == y_next).mean()) for k, v in case['next_pred'].items()}
+print('Đoạn', seg, '| người học', case['user_id'], '| độ dài', len(case['q']))
+print('Cạnh tiên quyết trong đoạn:', [(names[focus.index(a)] if a in focus else a, names[focus.index(b)] if b in focus else b) for a, b in chain])
+print('Độ chính xác dự đoán bước kế tiếp:', case['accuracy_next'])
+plot_case_study(case, names, OUT / 'hinh5_case_study.png')
+(OUT / 'case_study.json').write_text(json.dumps(case, ensure_ascii=False, indent=1))
+plt.show()"""),
+    md("## 9. Tóm tắt cho báo cáo"),
     code("""\
 import json
 
@@ -609,15 +656,69 @@ summary = {
     'bang4': b4.round(5).reset_index().to_dict(orient='records'),
     'so_du_doan_theo_nhom': counts,
     'kiem_dinh': tests.round(6).to_dict(orient='records'),
+    'case_study': {k: case[k] for k in ('segment', 'user_id', 'chain', 'focus_names', 'accuracy_next')},
 }
 (OUT / 'tom_tat.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2, default=float))
 !ls -la {OUT}"""),
+])
+
+NB06 = notebook([
+    md("""\
+# 06 — Xuất báo cáo LaTeX (PDF), Word (.docx) và slide seminar (.pptx)
+
+**Đầu vào:** `GraphK/analysis/` (notebook 05), `GraphK/processed/junyi/`, nội dung `docs/BAO_CAO.md`, `report/noi_dung_slide.json`, `report/thong_tin.json` trong kho mã.
+**Đầu ra** (`GraphK/bao_cao/`):
+
+| Tệp | Nội dung |
+|---|---|
+| `BaoCao_GraphK.pdf`, `latex/` | báo cáo LaTeX (XeLaTeX, phông DejaVu) và mã nguồn |
+| `BaoCao_GraphK.docx` | báo cáo Word |
+| `Seminar_GraphK.pptx` | slide seminar có case study |
+| `kiem_tra/` | ảnh từng trang/slide để rà soát hiển thị |
+
+Không cần GPU. Lần đầu cài TeX Live và LibreOffice mất khoảng 5 phút."""),
+    code(SETUP),
+    md("## 1. Cài công cụ"),
+    code("""\
+!apt-get -qq update > /dev/null
+!apt-get -qq install -y texlive-xetex texlive-latex-extra texlive-fonts-recommended libreoffice-writer libreoffice-impress poppler-utils > /dev/null
+!cd {REPO}/report && npm install --silent pptxgenjs docx
+!xelatex --version | head -1; node --version; soffice --version"""),
+    md("## 2. Gom số liệu và vẽ hình"),
+    code("""\
+from pathlib import Path
+ANALYSIS = Path(DRIVE) / 'analysis'
+PROC = Path(DRIVE) / 'processed' / 'junyi'
+OUT = Path(DRIVE) / 'bao_cao'
+OUT.mkdir(parents=True, exist_ok=True)
+%cd {REPO}
+!python report/gom_ket_qua.py {ANALYSIS} {PROC} report
+!python scripts/ve_so_do_kien_truc.py report/figures/hinh1_kien_truc.png
+!ls report/figures"""),
+    md("## 3. Báo cáo LaTeX → PDF"),
+    code("""\
+!python report/dien_so_lieu.py docs/BAO_CAO.md report/data/ket_qua.json build/BAO_CAO.md
+!python report/md_ast.py build/BAO_CAO.md > build/bao_cao.ast.json
+!python report/tex.py build/bao_cao.ast.json report/thong_tin.json build/latex/main.tex report/figures
+!cd build/latex && xelatex -interaction=nonstopmode -halt-on-error main.tex > /dev/null && xelatex -interaction=nonstopmode main.tex | tail -3
+!cp build/latex/main.pdf {OUT}/BaoCao_GraphK.pdf && rm -rf {OUT}/latex && cp -r build/latex {OUT}/latex"""),
+    md("## 4. Báo cáo Word và slide seminar"),
+    code("""\
+!NODE_PATH=report/node_modules node report/build_docx.js build/bao_cao.ast.json report/thong_tin.json report/figures {OUT}/BaoCao_GraphK.docx
+!NODE_PATH=report/node_modules node report/build_pptx.js report {OUT}/Seminar_GraphK.pptx"""),
+    md("## 5. Kết xuất ảnh để rà soát hiển thị"),
+    code("""\
+CHECK = OUT / 'kiem_tra'
+!rm -rf {CHECK} && mkdir -p {CHECK}
+!cd {CHECK} && soffice --headless --convert-to pdf {OUT}/BaoCao_GraphK.docx > /dev/null && soffice --headless --convert-to pdf {OUT}/Seminar_GraphK.pptx > /dev/null
+!cd {CHECK} && pdftoppm -jpeg -r 60 BaoCao_GraphK.pdf docx && pdftoppm -jpeg -r 80 Seminar_GraphK.pdf slide && pdftoppm -jpeg -r 60 {OUT}/BaoCao_GraphK.pdf tex
+!ls {CHECK} | head -80"""),
 ])
 
 
 if __name__ == "__main__":
     out = ROOT / "notebooks"
     out.mkdir(exist_ok=True)
-    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04), ("05_phan_tich.ipynb", NB05)):
+    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04), ("05_phan_tich.ipynb", NB05), ("06_xuat_bao_cao.ipynb", NB06)):
         nbf.write(nb, out / name)
         print("đã ghi", out / name)
