@@ -133,7 +133,8 @@ def pairwise_tests(preds: dict[str, dict[str, np.ndarray]], pairs: list[tuple[st
         m = mask_fn(da["q"]) if mask_fn else np.ones(len(da["y"]), dtype=bool)
         r = delong_paired(da["y"][m], da["p"][m], db["p"][m])
         rows.append({"mô hình 1": a, "mô hình 2": b, "số dự đoán": int(m.sum()), **r})
-    return pd.DataFrame(rows)
+    cols = ["mô hình 1", "mô hình 2", "số dự đoán", "auc_1", "auc_2", "delta", "se", "z", "p_value"]
+    return pd.DataFrame(rows, columns=cols)   # giữ đủ cột cả khi chưa có cặp nào chạy xong
 
 
 # ---------------------------------------------------------------- case study

@@ -67,3 +67,8 @@ def test_select_case_study_prefers_prerequisite_chains():
     seqs = {"questions": np.array(q), "responses": np.array(r), "offsets": np.array([0, 4, 8]), "seq_user": np.array([0, 1])}
     seg, edges = select_case_study(seqs, np.array([0, 1]), adj, min_len=3, max_len=10)
     assert seg == 1 and edges == [(0, 1)]
+
+
+def test_pairwise_tests_empty_has_columns():
+    t = pairwise_tests({}, [("a", "b")])
+    assert len(t) == 0 and "p_value" in t.columns
