@@ -7,3 +7,5 @@ data/
 .venv312/
 node_modules/
 build/
+report/figures/hinh[2-5]_*.png
+report/data/

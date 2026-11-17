@@ -22,7 +22,8 @@ os.makedirs(DRIVE, exist_ok=True)
 if not os.path.exists(REPO):
     !git clone -q https://github.com/Trilosphan/GraphK.git {REPO}
 else:
-    !git -C {REPO} pull -q
+    # đồng bộ đúng với GitHub (bỏ mọi thay đổi trong bản sao trên Colab)
+    !git -C {REPO} fetch -q && git -C {REPO} reset -q --hard origin/main
 %pip install -q -e {REPO}
 sys.path.insert(0, f'{REPO}/src')
 !git -C {REPO} log --oneline -1"""
