@@ -231,7 +231,12 @@ GraphK/
 ## 4. Thực nghiệm
 
 ### 4.1. Dữ liệu
-- **Lưu ý về số liệu:** một số bài tổng quan mô tả Junyi 2015 gồm 722 câu hỏi và 41 thành phần tri thức (knowledge component, KC), trong khi đề bài ghi 835 khái niệm (bảng bài tập). Cần thống kê lại trên tệp tải về và ghi rõ trong báo cáo tập nào được sử dụng.
+- **Đối chiếu số liệu** (kiểm tra ngày 17/11/2026 bằng notebook 02):
+  - Bảng bài tập có 837 dòng nhưng chỉ 835 tên khác nhau (2 bài bị lặp), khớp với con số 835 khái niệm của đề bài.
+  - 722 bài có tương tác trong nhật ký, khớp với con số 722 câu hỏi trong các bài tổng quan. Như vậy 113 nút chỉ có trong đồ thị.
+  - Đồ thị chuyên gia gồm 979 cạnh, 59 nút cô lập, 69 thành phần liên thông yếu.
+  - Đồ thị **không phải DAG**: có một chu trình gồm 3 bài về căn thức. Ngoài ra có 2 bài tự ghi chính mình làm tiên quyết; các vòng tự thân này đã bị loại.
+  - Sau tiền xử lý: 191.874 người học, 25.853.995 tương tác, tỉ lệ trả lời đúng 82,9%, 281.183 đoạn chuỗi.
 - **Thống kê mô tả Junyi sau tiền xử lý:** số người học, số tương tác, độ dài chuỗi trung bình, tỉ lệ trả lời đúng, các đặc trưng đồ thị (mục 3.1).
 - **Phân chia dữ liệu:** kiểm định chéo 5 phần (5-fold cross-validation) **theo người học**, mỗi phần gồm tập huấn luyện, tập kiểm định và tập kiểm tra (test set). Không người học nào xuất hiện đồng thời trong tập huấn luyện và tập kiểm tra.
 - **Giao thức chống rò rỉ dữ liệu (data leakage) cho RQ3:**
