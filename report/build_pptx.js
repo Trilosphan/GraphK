@@ -291,7 +291,7 @@ const STEP = chooseStep();
 // 13a -------------------------------------------------------------- lý thuyết: bài toán qua chuỗi của người học
 if (CS.q) {
   const s = addSlide("NOI_DUNG", "Case study");
-  s.addText("Case study: chuỗi tiên quyết giải tích của một người học", { placeholder: "title" });
+  s.addText("Case study: chuỗi tiên quyết giải tích", { placeholder: "title" });
   // sơ đồ: xếp khái niệm theo tầng (độ sâu trong chuỗi), cạnh có mũi tên = quan hệ tiên quyết chuyên gia
   const ids = CS.focus;
   const depth = Object.fromEntries(ids.map((i) => [i, 0]));
@@ -361,7 +361,7 @@ if (STEP) {
   // hai hàng tiêu đề: tên mô hình trải hai cột, rồi "trước" / "sau"
   const rows = [
     [H("Khái niệm", { rowspan: 2, align: "left" }), H("Quan hệ", { rowspan: 2, align: "left" }), ...models.map((m) => H(m, { colspan: 2 }))],
-    models.flatMap(() => [H("trước"), H("sau")]),
+    models.flatMap(() => [H("trước", { fontSize: 10 }), H("sau", { fontSize: 10 })]),
     ...nb.map((id) => {
       const i = CS.focus.indexOf(id);
       return [csName(id), rel(id), ...models.flatMap((m) => {
@@ -370,8 +370,8 @@ if (STEP) {
       })];
     })];
   const tableW = W - 2 * M - 6.4;
-  const restW = (tableW - 1.9 - 1.25) / (2 * models.length);
-  s.addTable(rows, { x: M + 6.4, y: 1.45, w: tableW, colW: [1.9, 1.25, ...Array(2 * models.length).fill(restW)], fontSize: 11,
+  const restW = (tableW - 1.75 - 1.1) / (2 * models.length);
+  s.addTable(rows, { x: M + 6.4, y: 1.45, w: tableW, colW: [1.75, 1.1, ...Array(2 * models.length).fill(restW)], fontSize: 11,
     fontFace: THEME.bodyFontFace, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" } });
   const dE = STEP.delta;
   text(s, [
