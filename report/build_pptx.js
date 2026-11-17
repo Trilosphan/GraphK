@@ -355,10 +355,13 @@ if (STEP) {
   // bảng trước / sau cho khái niệm được trả lời và các lân cận trong chuỗi
   const nb = [STEP.a, ...new Set((CS.chain || []).flatMap(([a, b]) => (a === STEP.a ? [b] : b === STEP.a ? [a] : [])))];
   const models = Object.keys(CS.traces);
-  const head = ["Khái niệm", "Quan hệ", ...models.flatMap((m) => [`${m} trước`, "sau"])];
+  const H = (text, extra = {}) => ({ text, options: { bold: true, fill: { color: HEX.lt2 }, align: "center", valign: "middle", ...extra } });
   const rel = (id) => (id === STEP.a ? "được trả lời" : (CS.chain || []).some(([a, b]) => a === STEP.a && b === id) ? "phụ thuộc" : "tiên quyết");
-  const cell = (v, bold) => ({ text: f(v, 2), options: { bold } });
-  const rows = [head.map((h) => ({ text: h, options: { bold: true, fill: { color: HEX.lt2 } } })),
+  const cell = (v, bold) => ({ text: f(v, 2), options: { bold, align: "center" } });
+  // hai hàng tiêu đề: tên mô hình trải hai cột, rồi "trước" / "sau"
+  const rows = [
+    [H("Khái niệm", { rowspan: 2, align: "left" }), H("Quan hệ", { rowspan: 2, align: "left" }), ...models.map((m) => H(m, { colspan: 2 }))],
+    models.flatMap(() => [H("trước"), H("sau")]),
     ...nb.map((id) => {
       const i = CS.focus.indexOf(id);
       return [csName(id), rel(id), ...models.flatMap((m) => {
@@ -366,9 +369,9 @@ if (STEP) {
         return [cell(tr[STEP.t - 1], false), cell(tr[STEP.t], tr[STEP.t] - tr[STEP.t - 1] > 0.05)];
       })];
     })];
-  const nCol = head.length;
-  const restW = (W - 2 * M - 6.4 - 2.25 - 1.15) / (nCol - 2);
-  s.addTable(rows, { x: M + 6.4, y: 1.45, w: W - 2 * M - 6.4, colW: [2.25, 1.15, ...Array(nCol - 2).fill(restW)], fontSize: 11,
+  const tableW = W - 2 * M - 6.4;
+  const restW = (tableW - 1.9 - 1.25) / (2 * models.length);
+  s.addTable(rows, { x: M + 6.4, y: 1.45, w: tableW, colW: [1.9, 1.25, ...Array(2 * models.length).fill(restW)], fontSize: 11,
     fontFace: THEME.bodyFontFace, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" } });
   const dE = STEP.delta;
   text(s, [
@@ -376,7 +379,7 @@ if (STEP) {
     { text: `P(đúng) dự đoán ngay trước và ngay sau bước ${STEP.t}; in đậm khi tăng hơn 0,05. ` },
     { text: `Với GKT-Expert, ${csName(STEP.b)} tăng ${f(dE, 2)} dù người học chưa làm bài này: bằng chứng đi theo cạnh ${csName(STEP.a)} → ${csName(STEP.b)}. ` },
     { text: "DKT cũng có thể thay đổi dự đoán các khái niệm khác, nhưng qua vector ẩn chung chứ không theo cấu trúc tường minh." },
-  ], { x: M + 6.4, y: 1.55 + 0.42 * (nb.length + 1) + 0.3, w: W - 2 * M - 6.4, h: 2.6, fontSize: 13 });
+  ], { x: M + 6.4, y: 1.55 + 0.4 * (nb.length + 2) + 0.3, w: W - 2 * M - 6.4, h: 2.6, fontSize: 13 });
   s.addNotes("Giải thích lý thuyết qua một bước cụ thể. Bên trái là công thức một bước cập nhật của GKT hai chiều và của DKT. "
     + "Bên phải là số liệu thật lấy từ trace của mô hình: mức thành thạo dự đoán của khái niệm vừa trả lời và các khái niệm kề nó, ngay trước và ngay sau bước đó.");
 }
