@@ -2,7 +2,7 @@
 
 > Môn Machine Learning · Mô hình trọng tâm: GKT (Graph-based Knowledge Tracing)
 > Dữ liệu chính: Junyi Academy (835 khái niệm, đồ thị tiên quyết do chuyên gia xác nhận) · Dữ liệu bổ sung: MOOCCubeX
-> Mức độ: Chuyên sâu
+> Mức độ: Chuyên sâu · Môi trường thử nghiệm: Google Colab (GPU T4)
 
 ---
 
@@ -39,60 +39,89 @@
 
 ## 2. Các nghiên cứu liên quan
 
-Mỗi paper trình bày theo 5 ý: **phương pháp/giải thuật · dữ liệu · ưu · khuyết · kết quả đánh giá**. Mục cuối tổng hợp và đề xuất.
+**Tiêu chí chọn bài:** công bố **từ 2020 trở lại đây**, trên tạp chí xếp hạng Q1–Q4 (Scimago/SJR) hoặc hội nghị hạng A/A* (CORE), có DOI hoặc trang kỷ yếu chính thức.
+- Bài kinh điển trước 2020 (BKT 1994, DKT 2015, DKVMN 2017, GKT 2019) chỉ nhắc ở mục 1.2 và mục 3, **không** tính vào danh sách này.
+- Hạng Q ghi trong bảng là hạng của tạp chí theo SJR. Trước khi nộp cần đối chiếu lại trên scimagojr.com theo đúng năm công bố.
 
-### 2.1. BKT — Corbett & Anderson (1994)
-*Knowledge tracing: Modeling the acquisition of procedural knowledge.* User Modeling and User-Adapted Interaction, 4(4), 253–278.
-- **Phương pháp:** HMM hai trạng thái cho mỗi kỹ năng, với 4 tham số (biết sẵn, học, đoán mò, trượt).
-- **Ưu:** diễn giải được, ít tham số.
-- **Khuyết:** các kỹ năng độc lập nhau, không dùng quan hệ tiên quyết.
+Mỗi bài trình bày theo 5 ý: **phương pháp/giải thuật · dữ liệu · ưu · khuyết · đánh giá**. Mục 2.4 tổng hợp và nêu đề xuất.
 
-### 2.2. DKT — Piech et al. (2015)
-*Deep Knowledge Tracing.* NeurIPS 2015.
-- **Phương pháp:** RNN/LSTM trên chuỗi one-hot `(câu hỏi, đúng/sai)`.
-- **Dữ liệu:** ASSISTments, Khan Academy.
-- **Ưu:** học được phụ thuộc giữa kỹ năng mà không cần gán nhãn.
-- **Khuyết:** trạng thái ẩn là một vector chung, khó diễn giải theo từng khái niệm, quan hệ giữa khái niệm chỉ có dạng ẩn.
+### 2.1. Bài trên tạp chí (Q1)
 
-### 2.3. DKVMN — Zhang et al. (2017)
-*Dynamic Key-Value Memory Networks for Knowledge Tracing.* WWW 2017.
-- **Phương pháp:** bộ nhớ khóa (khái niệm, cố định) và bộ nhớ giá trị (mức nắm vững, cập nhật), dùng cơ chế đọc/ghi theo trọng số chú ý.
-- **Ưu:** trạng thái theo từng khái niệm tiềm ẩn.
-- **Khuyết:** khái niệm tiềm ẩn không gắn với đồ thị thật.
+**[J1] JKT — Song et al. (2021).** *JKT: A joint graph convolutional network based Deep Knowledge Tracing.* Information Sciences, 580, 510–523. DOI 10.1016/j.ins.2021.08.100.
+- **Phương pháp:** dựng đồ thị bài tập–bài tập và khái niệm–khái niệm, kết hợp quan hệ bài tập–khái niệm, rồi đưa qua GCN kết hợp; phần chuỗi dùng DKT.
+- **Dữ liệu:** 4 bộ dữ liệu thật (gồm các bộ ASSISTments).
+- **Ưu:** nối được các bài tập thuộc những khái niệm khác nhau, diễn giải được qua nghiên cứu tình huống.
+- **Khuyết:** đồ thị dựng từ thống kê và gán nhãn khái niệm, không dùng đồ thị tiên quyết chuyên gia; không phân biệt cạnh có hướng.
 
-### 2.4. AKT — Ghosh, Heffernan & Lan (2020) — *mô hình đối chứng chính*
-*Context-Aware Attentive Knowledge Tracing.* KDD 2020.
-- **Phương pháp:** Transformer với chú ý suy giảm đơn điệu theo khoảng cách thời gian, embedding Rasch theo câu hỏi.
-- **Ưu:** thuộc nhóm AUC cao nhất trên nhiều benchmark.
+**[J2] Bi-CLKT — Song et al. (2022).** *Bi-CLKT: Bi-Graph Contrastive Learning based Knowledge Tracing.* Knowledge-Based Systems, 241, 108274. DOI 10.1016/j.knosys.2022.108274.
+- **Phương pháp:** học tương phản hai tầng trên đồ thị con bài tập–bài tập: tầng node cho biểu diễn bài tập, tầng đồ thị cho biểu diễn khái niệm; lớp dự đoán là RNN hoặc mạng bộ nhớ.
+- **Dữ liệu:** 4 bộ dữ liệu thật.
+- **Ưu:** biểu diễn khái niệm tốt hơn khi dữ liệu thưa.
+- **Khuyết:** đồ thị suy từ dữ liệu, dễ khớp với hành vi của tập đánh giá; khối lượng tính toán lớn.
+
+**[J3] DGEKT — Cui et al. (2024).** *DGEKT: A Dual Graph Ensemble Learning Method for Knowledge Tracing.* ACM Transactions on Information Systems, 42(3), Article 78. DOI 10.1145/3638350.
+- **Phương pháp:** hai đồ thị (siêu đồ thị bài tập–khái niệm và đồ thị có hướng chuyển tiếp giữa các tương tác), kết hợp bằng chưng cất tri thức trực tuyến.
+- **Dữ liệu:** 3 bộ benchmark, so với 8 mô hình KT.
+- **Ưu:** tận dụng cả quan hệ không thuần nhất lẫn quan hệ có hướng.
+- **Khuyết:** đồ thị có hướng dựng từ chuyển tiếp thống kê, chưa từng đối chiếu với tri thức chuyên gia.
+
+**[J4] HHSKT — Ni et al. (2023).** *HHSKT: A learner–question interactions based heterogeneous graph neural network model for knowledge tracing.* Expert Systems with Applications, 215, 119334. DOI 10.1016/j.eswa.2022.119334.
+- **Phương pháp:** GNN không thuần nhất trên đồ thị học sinh–câu hỏi–khái niệm.
+- **Ghi chú:** em chưa đọc được toàn văn; cần đọc bản gốc trước khi điền phần ưu–khuyết.
+
+**[J5] Khảo sát — Abdelrahman, Wang & Nunes (2023).** *Knowledge Tracing: A Survey.* ACM Computing Surveys, 55(11), 1–37. DOI 10.1145/3569576.
+- Dùng cho mục 1.2 (lịch sử, phân loại mô hình, các bộ dữ liệu benchmark) và để chỉ ra khoảng trống nghiên cứu.
+
+**[J6] Khảo sát — Shen et al. (2024).** *A Survey of Knowledge Tracing: Models, Variants, and Applications.* IEEE Transactions on Learning Technologies, 17, 1898–1919. DOI 10.1109/TLT.2024.3383325.
+- Phân loại 3 nhóm mô hình KT cơ bản và các biến thể; có thư viện mã nguồn mở đi kèm.
+
+### 2.2. Bài trên hội nghị hạng A*/A
+
+**[C1] AKT — Ghosh, Heffernan & Lan (2020).** *Context-Aware Attentive Knowledge Tracing.* KDD 2020. DOI 10.1145/3394486.3403282. — **mô hình đối chứng chính**
+- **Phương pháp:** Transformer với chú ý suy giảm đơn điệu theo khoảng cách thời gian, embedding kiểu Rasch theo câu hỏi.
+- **Ưu:** thuộc nhóm có AUC cao nhất trên nhiều benchmark.
 - **Khuyết:** không dùng cấu trúc tiên quyết.
 
-### 2.5. GKT — Nakagawa, Iwasawa & Matsuo (2019) — *mô hình trọng tâm*
-*Graph-based Knowledge Tracing: Modeling Student Proficiency Using Graph Neural Network.* IEEE/WIC/ACM WI 2019.
-- **Phương pháp:**
-  - Mỗi khái niệm có một trạng thái ẩn riêng.
-  - Khi học sinh trả lời khái niệm `i`: tổng hợp đặc trưng của `i` và hàng xóm, cập nhật bằng `f_self` (cho `i`) và `f_neighbor` (cho hàng xóm), qua cổng erase–add, rồi GRU.
-  - Dự đoán đúng/sai cho từng khái niệm.
-- **Đồ thị trong bài gốc:**
-  - Dựng sẵn: dense, transition (thống kê chuyển tiếp), DKT-based.
-  - Học từ dữ liệu: PAM, MHA, VAE.
-  - Bài gốc **không** dùng đồ thị chuyên gia. Đây chính là khoảng trống mà đồ án này lấp.
-- **Dữ liệu:** ASSISTments 2009, KDD Cup 2010.
-- **Ưu:** diễn giải được theo từng node, khai thác cấu trúc đồ thị.
-- **Khuyết:** chi phí tính toán tăng theo số node; nhạy với chất lượng đồ thị.
+**[C2] SKT — Tong et al. (2020).** *Structure-based Knowledge Tracing: An Influence Propagation View.* IEEE ICDM 2020, 541–550.
+- **Phương pháp:** lan truyền ảnh hưởng trên cấu trúc tri thức: quan hệ có hướng (tiên quyết) lan truyền từng phần, quan hệ vô hướng (tương tự) lan truyền đồng bộ.
+- **Ưu:** gần nhất với đồ án vì dùng quan hệ tiên quyết có hướng; làm căn cứ cho cách tách hai chiều lan truyền ở mục 3.3 và cho `edge_type`.
+- **Khuyết:** đồ thị tiên quyết chủ yếu suy từ dữ liệu; không tách riêng đóng góp của tri thức chuyên gia.
 
-### 2.6. (Mở rộng) SKT — Tong et al. (2020); GIKT — Yang et al. (2020)
-- **SKT** (*Structure-based Knowledge Tracing: An Influence Propagation View*, ICDM 2020): lan truyền ảnh hưởng theo quan hệ tiên quyết (có hướng) và tương tự (vô hướng). Dùng để tham khảo cách tách loại cạnh (`edge_type`).
-- **GIKT** (*GIKT: A Graph-based Interaction Model for Knowledge Tracing*, ECML-PKDD 2020): GCN trên đồ thị câu hỏi–kỹ năng.
+**[C3] GIKT — Yang et al. (2020).** *GIKT: A Graph-based Interaction Model for Knowledge Tracing.* ECML-PKDD 2020, LNCS 12457, 299–315. DOI 10.1007/978-3-030-67658-2_18.
+- **Phương pháp:** GCN lan truyền embedding trên đồ thị câu hỏi–kỹ năng, mô hình hóa tương tác giữa trạng thái hiện tại, các bài đã làm có liên quan, câu hỏi đích và kỹ năng liên quan.
+- **Đánh giá:** đạt SOTA trên 3 bộ dữ liệu, AUC tăng ít nhất khoảng 1%.
 
-### 2.7. Dữ liệu và benchmark
-- **Junyi:** Chang, Hsu & Chen (2015), *Modeling Exercise Relationships in E-Learning: A Unified Approach*, EDM 2015. Đây là nguồn đồ thị tiên quyết.
-- **MOOCCubeX:** Yu et al. (2021), CIKM 2021.
-- **pyKT:** Liu et al. (2022), NeurIPS Datasets & Benchmarks. Có quy trình tiền xử lý chuẩn và cài đặt sẵn AKT, DKT, GKT để đối chứng.
+**[C4] simpleKT — Liu et al. (2023).** *simpleKT: A Simple But Tough-to-Beat Baseline for Knowledge Tracing.* ICLR 2023.
+- **Vai trò:** đối chứng mạnh bổ sung. Bài chỉ ra rằng nhiều mô hình phức tạp không hơn một baseline đơn giản khi đánh giá chuẩn hóa. Đây là lý do đồ án phải dùng giao thức chuẩn (pyKT).
 
-### 2.8. Tổng hợp và đề xuất
-- Bảng so sánh: phương pháp × dữ liệu × dùng đồ thị? (không / ẩn / thống kê / chuyên gia) × diễn giải × AUC báo cáo.
-- **Khoảng trống:** chưa có đánh giá tách bạch giữa đồ thị chuyên gia và đồ thị thống kê trong cùng một kiến trúc GKT, với giao thức chống rò rỉ.
-- **Đề xuất:** GKT dùng đồ thị chuyên gia Junyi, so với biến thể đồ thị thống kê và với AKT/DKT.
+**[C5] PSI-KT — Zhou et al. (2024).** *Predictive, scalable and interpretable knowledge tracing on structured domains.* ICLR 2024.
+- **Phương pháp:** mô hình sinh phân cấp, suy ra đồng thời đặc điểm nhận thức của từng học sinh và đồ thị tiên quyết dùng chung, ước lượng độ mạnh tiên quyết từ dữ liệu làm bài.
+- **Ưu:** diễn giải được, áp dụng được cả khi không có bản đồ tri thức chuyên gia.
+- **Liên hệ với đồ án:** đây là đại diện của hướng "đồ thị tiên quyết suy từ dữ liệu", đối lập trực tiếp với đồ thị chuyên gia (RQ2).
+
+**[C6] pyKT — Liu et al. (2022).** *pyKT: A Python Library to Benchmark Deep Learning based Knowledge Tracing Models.* NeurIPS 2022 Datasets & Benchmarks.
+- Có quy trình tiền xử lý chuẩn (gồm `junyi2015`) và cài đặt sẵn DKT, AKT, GKT, simpleKT, dùng làm khung đối chứng.
+
+### 2.3. Nguồn dữ liệu
+- **Junyi:** Chang, Hsu & Chen (2015), EDM 2015, và bộ dữ liệu trên PSLC DataShop. Đây là nguồn dữ liệu, không tính vào danh sách bài liên quan.
+- **MOOCCubeX:** Yu et al. (2021), CIKM 2021, 4643–4652. Kho GitHub THU-KEG/MOOCCubeX có script tải dữ liệu và đã tinh chỉnh quan hệ tiên quyết cho Toán, Tâm lý học, Khoa học máy tính.
+
+### 2.4. Tổng hợp và đề xuất
+
+| Bài | Năm | Nơi công bố | Hạng | Loại đồ thị | Có hướng? | Đồ thị chuyên gia? |
+|---|---|---|---|---|---|---|
+| JKT | 2021 | Information Sciences | Q1 | bài tập–bài tập, khái niệm–khái niệm | không | không |
+| Bi-CLKT | 2022 | Knowledge-Based Systems | Q1 | bài tập–bài tập (tương phản) | không | không |
+| DGEKT | 2024 | ACM TOIS | Q1 | siêu đồ thị + đồ thị chuyển tiếp | có | không |
+| HHSKT | 2023 | Expert Syst. Appl. | Q1 | không thuần nhất | — | không |
+| AKT | 2020 | KDD | A* | không đồ thị | — | — |
+| SKT | 2020 | ICDM | A* | tiên quyết + tương tự | có | một phần |
+| GIKT | 2020 | ECML-PKDD | A | câu hỏi–kỹ năng | không | không |
+| simpleKT | 2023 | ICLR | A* | không đồ thị | — | — |
+| PSI-KT | 2024 | ICLR | A* | tiên quyết suy từ dữ liệu | có | không |
+
+- **Khoảng trống:** chưa có đánh giá tách bạch giữa đồ thị chuyên gia và đồ thị thống kê trong **cùng một kiến trúc GKT**, kèm giao thức chống rò rỉ trên nhóm khái niệm giữ lại.
+- **Đề xuất:** GKT dùng đồ thị tiên quyết chuyên gia Junyi, lan truyền hai chiều theo cách của SKT, so với GKT-Stat (cùng số cạnh), AKT, simpleKT và DKT.
 
 ---
 
@@ -118,6 +147,10 @@ So sánh ít nhất hai phương án bằng thí nghiệm ablation:
 3. **Chuẩn hóa an toàn:** quy ước `D^{-1}` với bậc 0 là 0 để tránh chia cho 0 (`NaN`).
 
 ### 3.3. Mô hình GKT tùy biến
+- **Gốc:** GKT của Nakagawa et al. (2019).
+  - Mỗi khái niệm có một trạng thái ẩn riêng.
+  - Khi học sinh trả lời khái niệm `i`: cập nhật `i` bằng `f_self`, cập nhật hàng xóm bằng `f_neighbor`, qua cổng erase–add, rồi GRU.
+  - Bài gốc chỉ thử đồ thị dense, transition, đồ thị suy từ DKT, và đồ thị học được (PAM, MHA, VAE). **Không** thử đồ thị chuyên gia.
 - **Trạng thái:** `H_t ∈ R^{835×d}`.
 - **Lan truyền có hướng:**
   - Tách hai chiều: ảnh hưởng xuôi (tiên quyết → khái niệm sau) và ngược (khái niệm sau → tiên quyết). Hai chiều có trọng số khác nhau: `f_fwd`, `f_bwd`.
@@ -140,21 +173,35 @@ So sánh ít nhất hai phương án bằng thí nghiệm ablation:
 - Tùy chọn: GKT-Expert∪Stat, hợp hai đồ thị.
 - Lưu ý: từ điển dữ liệu ghi `co_occurrence_matrix` cho MOOCCubeX, nhưng để so sánh trên Junyi cần tính một ma trận tương tự từ nhật ký Junyi.
 
-### 3.5. Pipeline mã nguồn
+### 3.5. Pipeline mã nguồn — chạy trên Google Colab
+- **Môi trường:** Google Colab với GPU T4. Mã nằm trong kho `Trilosphan/GraphK`; mỗi notebook tự `git clone` kho rồi `pip install -r requirements.txt`. Dữ liệu và kết quả lưu trên Google Drive (`/content/drive/MyDrive/GraphK/`) để không mất khi phiên Colab bị ngắt.
+- **Cấu trúc kho:**
 ```
-data/raw → src/preprocess.py → data/processed (chuỗi + node_id + A.npz)
-         → src/graphs.py (expert / stat / random)
-         → src/train.py --model {gkt,akt,dkt} --graph {...} --seed
-         → results/*.json → src/report.py (bảng + biểu đồ)
+GraphK/
+├── notebooks/
+│   ├── 01_tai_du_lieu.ipynb      # tải Junyi (DataShop) + MOOCCubeX về Drive, kiểm SHA256
+│   ├── 02_tien_xu_ly.ipynb       # chuỗi, node_id, A.npz, thống kê đồ thị
+│   ├── 03_do_thi.ipynb           # dựng Expert / Stat (theo fold) / Random / Dense
+│   ├── 04_huan_luyen.ipynb       # GKT + AKT/DKT/simpleKT (pyKT), checkpoint mỗi epoch
+│   └── 05_danh_gia.ipynb         # AUC, kiểm định, bảng, hình, khái niệm giữ lại
+├── src/graphk/                   # mã dùng chung: preprocess.py, graphs.py, gkt.py, train.py, eval.py
+├── configs/*.yaml                # một tệp cho mỗi thí nghiệm
+├── tests/                        # kiểm dựng ma trận kề, chuẩn hóa, node cô lập
+└── requirements.txt
 ```
-- Cấu hình bằng YAML, cố định seed, log thí nghiệm, kiểm thử đơn vị cho bước dựng ma trận kề và chuẩn hóa.
-- AKT/DKT: dùng cài đặt pyKT để bảo đảm đối chứng chuẩn.
+- **Thực hành để tái lập trên Colab:**
+  - Cố định seed. Ghi phiên bản thư viện và commit Git vào tệp kết quả.
+  - Lưu checkpoint lên Drive mỗi epoch. Khi Colab ngắt phiên thì chạy lại ô huấn luyện, mô hình học tiếp từ checkpoint gần nhất.
+  - Mỗi ô notebook chỉ gọi hàm trong `src/graphk/`, không chứa logic dài, để tách mã khỏi notebook và để kiểm thử được.
+- **Ước lượng tài nguyên:** 835 node nhân với `d = 32–64` cho ma trận trạng thái nhỏ, vừa bộ nhớ GPU T4 (16 GB). Nút thắt là độ dài chuỗi, nên cắt đoạn ≤ 200 bước và dùng phép nhân ma trận thưa.
+- **Đối chứng:** AKT, DKT, simpleKT chạy bằng `pykt-toolkit` trên cùng các fold.
 
 ---
 
 ## 4. Thử nghiệm
 
 ### 4.1. Dữ liệu
+- **Lưu ý số liệu:** một số khảo sát mô tả Junyi 2015 là 722 câu hỏi / 41 KC, còn đề bài ghi 835 khái niệm (bảng bài tập). Cần đếm lại trên tệp tải về và ghi rõ trong báo cáo đã dùng tập nào.
 - **Junyi:** thống kê sau tiền xử lý gồm số học sinh, số tương tác, độ dài chuỗi trung bình, tỉ lệ đúng, thống kê đồ thị (mục 3.1).
 - **Chia dữ liệu:** 5-fold **theo học sinh** (train / val / test). Không để học sinh nào xuất hiện ở cả train và test.
 - **Giao thức chống rò rỉ (RQ3):**
@@ -199,14 +246,27 @@ data/raw → src/preprocess.py → data/processed (chuỗi + node_id + A.npz)
   - kết hợp chú ý theo kiểu AKT với lan truyền GNN.
 
 ## Tài liệu tham khảo
-1. Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing: Modeling the acquisition of procedural knowledge. *UMUAI*, 4(4), 253–278.
-2. Piech, C., et al. (2015). Deep Knowledge Tracing. *NeurIPS*.
-3. Zhang, J., Shi, X., King, I., & Yeung, D.-Y. (2017). Dynamic Key-Value Memory Networks for Knowledge Tracing. *WWW*.
-4. Nakagawa, H., Iwasawa, Y., & Matsuo, Y. (2019). Graph-based Knowledge Tracing: Modeling Student Proficiency Using Graph Neural Network. *IEEE/WIC/ACM WI*.
-5. Ghosh, A., Heffernan, N., & Lan, A. S. (2020). Context-Aware Attentive Knowledge Tracing. *KDD*.
-6. Tong, S., et al. (2020). Structure-based Knowledge Tracing: An Influence Propagation View. *ICDM*.
-7. Yang, Y., et al. (2020). GIKT: A Graph-based Interaction Model for Knowledge Tracing. *ECML-PKDD*.
-8. Chang, H.-S., Hsu, H.-J., & Chen, K.-T. (2015). Modeling Exercise Relationships in E-Learning: A Unified Approach. *EDM*.
-9. Yu, J., et al. (2021). MOOCCubeX: A Large Knowledge-centered Repository for Adaptive Learning in MOOCs. *CIKM*.
-10. Liu, Z., et al. (2022). pyKT: A Python Library to Benchmark Deep Learning based Knowledge Tracing Models. *NeurIPS Datasets and Benchmarks*.
-11. Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks. *ICLR*.
+
+### Nghiên cứu liên quan (từ 2020)
+1. Song, X., Li, J., Tang, Y., Zhao, T., Chen, Y., & Guan, Z. (2021). JKT: A joint graph convolutional network based Deep Knowledge Tracing. *Information Sciences*, 580, 510–523. https://doi.org/10.1016/j.ins.2021.08.100
+2. Song, X., Li, J., Lei, Q., Zhao, W., Chen, Y., & Mian, A. (2022). Bi-CLKT: Bi-Graph Contrastive Learning based Knowledge Tracing. *Knowledge-Based Systems*, 241, 108274. https://doi.org/10.1016/j.knosys.2022.108274
+3. Cui, C., Yao, Y., Zhang, C., Ma, H., Ma, Y., Ren, Z., Zhang, C., & Ko, J. (2024). DGEKT: A Dual Graph Ensemble Learning Method for Knowledge Tracing. *ACM Transactions on Information Systems*, 42(3), 78:1–78:24. https://doi.org/10.1145/3638350
+4. Ni, Q., et al. (2023). HHSKT: A learner–question interactions based heterogeneous graph neural network model for knowledge tracing. *Expert Systems with Applications*, 215, 119334. https://doi.org/10.1016/j.eswa.2022.119334
+5. Abdelrahman, G., Wang, Q., & Nunes, B. P. (2023). Knowledge Tracing: A Survey. *ACM Computing Surveys*, 55(11), 1–37. https://doi.org/10.1145/3569576
+6. Shen, S., Liu, Q., Huang, Z., Zheng, Y., Yin, M., Wang, M., & Chen, E. (2024). A Survey of Knowledge Tracing: Models, Variants, and Applications. *IEEE Transactions on Learning Technologies*, 17, 1898–1919. https://doi.org/10.1109/TLT.2024.3383325
+7. Ghosh, A., Heffernan, N., & Lan, A. S. (2020). Context-Aware Attentive Knowledge Tracing. *KDD 2020*, 2330–2339. https://doi.org/10.1145/3394486.3403282
+8. Tong, S., Liu, Q., Huang, W., Huang, Z., Chen, E., Liu, C., Ma, H., & Wang, S. (2020). Structure-based Knowledge Tracing: An Influence Propagation View. *IEEE ICDM 2020*, 541–550.
+9. Yang, Y., Shen, J., Qu, Y., Liu, Y., Wang, K., Zhu, Y., Zhang, W., & Yu, Y. (2020). GIKT: A Graph-based Interaction Model for Knowledge Tracing. *ECML-PKDD 2020*, LNCS 12457, 299–315. https://doi.org/10.1007/978-3-030-67658-2_18
+10. Liu, Z., Liu, Q., Chen, J., Huang, S., & Luo, W. (2023). simpleKT: A Simple But Tough-to-Beat Baseline for Knowledge Tracing. *ICLR 2023*.
+11. Zhou, H., Bamler, R., Wu, C. M., & Tejero-Cantero, Á. (2024). Predictive, scalable and interpretable knowledge tracing on structured domains. *ICLR 2024*.
+12. Liu, Z., Liu, Q., Chen, J., Huang, S., Tang, J., & Luo, W. (2022). pyKT: A Python Library to Benchmark Deep Learning based Knowledge Tracing Models. *NeurIPS 2022 Datasets and Benchmarks*.
+
+### Dữ liệu
+13. Chang, H.-S., Hsu, H.-J., & Chen, K.-T. (2015). Modeling Exercise Relationships in E-Learning: A Unified Approach. *EDM 2015*.
+14. Yu, J., et al. (2021). MOOCCubeX: A Large Knowledge-centered Repository for Adaptive Learning in MOOCs. *CIKM 2021*, 4643–4652.
+
+### Nền tảng (trước 2020, chỉ dẫn ở mục 1 và 3)
+15. Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing: Modeling the acquisition of procedural knowledge. *UMUAI*, 4(4), 253–278.
+16. Piech, C., et al. (2015). Deep Knowledge Tracing. *NeurIPS 2015*.
+17. Nakagawa, H., Iwasawa, Y., & Matsuo, Y. (2019). Graph-based Knowledge Tracing: Modeling Student Proficiency Using Graph Neural Network. *IEEE/WIC/ACM WI 2019*.
+18. Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks. *ICLR 2017*.
