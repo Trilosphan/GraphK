@@ -8,7 +8,7 @@
   "truc_auc_max": 0.81,
   "tieu_de_rq3": "Khái niệm giữ lại: không có dấu hiệu rò rỉ",
   "rq3": "Mọi mô hình giảm khoảng 0,04 AUC trên 108 khái niệm giữ lại, kể cả DKT, nên mức giảm do khái niệm khó hơn chứ không do đồ thị. Khoảng cách của GKT-Stat (0,0396) bằng GKT-Random (0,0395): đồ thị thống kê không tạo lợi thế ở nơi nó có cạnh. GKT-Expert vẫn hơn GKT-Random 0,0035 trên khái niệm giữ lại.",
-  "cat_bo": "Đang chạy: GKT-Expert với nút gốc ảo cho nút cô lập, và GKT-Expert chỉ lan truyền chiều xuôi. ⟨Cập nhật khi xong⟩",
+  "cat_bo": "Nút gốc ảo: 0,7945 (≈ bản gốc 0,7946) — xử lý nút cô lập không quan trọng. Chỉ chiều xuôi: 0,7940 (−0,0006) — chiều ngược giúp rất ít; lợi ích đồ thị đến chủ yếu từ chiều xuôi.",
   "case_study": [
     "Bước 24, làm đúng power_rule: GKT-Expert nâng quotient_rule từ 0,33 lên 0,71 và lhopitals_rule từ 0,14 lên 0,48, dù người học chưa làm hai bài này",
     "DKT cũng đổi dự đoán của khái niệm khác, nhưng qua vector ẩn chung, không theo cạnh tiên quyết",
@@ -54,12 +54,12 @@
     "hinh2": "Bên trái: phân phối bậc; bên phải: giá trị gia tăng theo nhóm cặp khái niệm.",
     "ket_qua": "Năm mô hình chính đã có kết quả trên phần 0. Nhấn mạnh so sánh cùng kiến trúc: chỉ thay nguồn đồ thị. AKT thấp do thiết lập huấn luyện chung, không kết luận về năng lực AKT.",
     "rq3": "So sánh AUC toàn tập với AUC trên khái niệm giữ lại; khoảng cách ở GKT-Stat so với GKT-Expert là bằng chứng chính cho câu hỏi rò rỉ.",
-    "cat_bo": "Hai biến thể cắt bỏ đang chạy.",
+    "cat_bo": "Hai biến thể đều chênh dưới 0,001 AUC, nhỏ hơn nhiều khoảng cách giữa các đồ thị (≈0,003). Nút gốc ảo không giúp, khớp với việc lợi thế chuyên gia biến mất trên khái niệm cô lập. Chưa kiểm định DeLong cho hai so sánh này.",
     "case1": "Đoạn chuỗi được chọn tất định: nhiều cạnh tiên quyết nhất, khái niệm phụ thuộc có cả đúng lẫn sai.",
     "case2": "Nhấn mạnh hiện tượng lan truyền: trạng thái của khái niệm phụ thuộc thay đổi trước khi người học làm khái niệm đó. Đây là điều DKT không biểu diễn tường minh.",
     "phan_bien": "Trả lời hai câu hỏi phản biện của đề bài bằng thiết kế đánh giá.",
     "han_che": "Các hạn chế chính và hướng mở rộng.",
-    "ket_luan": "Tóm tắt ba ý chính; AKT và hai thí nghiệm cắt bỏ sẽ bổ sung."
+    "ket_luan": "Tóm tắt ba ý chính và hướng phát triển."
   },
   "tai_lieu_slide": [
     "Piech và cs., Deep knowledge tracing, NeurIPS 2015",

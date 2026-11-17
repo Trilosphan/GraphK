@@ -1,7 +1,7 @@
 # Truy vết tri thức dựa trên đồ thị với đồ thị tiên quyết tường minh: đóng góp của tri thức chuyên gia so với tri thức thống kê
 
 <!-- Nguồn nội dung của báo cáo (LaTeX IEEEtran, Word, slide). Bảng và số liệu do report/dien_so_lieu.py điền từ report/data/ket_qua.json;
-trích dẫn dạng [@…] được đánh số kiểu IEEE theo thứ tự xuất hiện từ report/tai_lieu.json. Các đoạn ⟨…⟩ chờ kết quả còn lại. -->
+trích dẫn dạng [@…] được đánh số kiểu IEEE theo thứ tự xuất hiện từ report/tai_lieu.json. -->
 
 ## Tóm tắt
 
@@ -103,7 +103,7 @@ Thứ tự trên tập kiểm tra là DKT ({{auc:DKT}}) > GKT-Expert ({{auc:GKT-
 
 <!-- BANG2 -->
 
-⟨Nhận xét khi hai thí nghiệm cắt bỏ chạy xong.⟩
+Cả hai thành phần đều đóng góp rất ít. Thay vòng tự thân bằng nút gốc ảo cho nút cô lập gần như không đổi AUC kiểm tra (0,7945 so với 0,7946) lẫn AUC trên khái niệm giữ lại (0,7598 so với 0,7599). Kết quả này khớp với phép kiểm cơ chế ở mục 4.4: lợi thế của đồ thị chuyên gia biến mất trên các khái niệm cô lập, nên việc cho chúng một láng giềng chung cũng không mang thêm thông tin. Bỏ chiều ngược, chỉ lan truyền từ khái niệm tiên quyết sang khái niệm phụ thuộc, làm AUC giảm 0,0006 (0,7940) và AUC trên khái niệm giữ lại giảm 0,0006 (0,7594). Mức giảm này nhỏ hơn nhiều so với khoảng cách 0,0027–0,0030 giữa đồ thị chuyên gia với đồ thị thống kê và ngẫu nhiên. Phần lớn lợi ích của đồ thị vì vậy đến từ chiều xuôi; chiều ngược (thành công ở khái niệm phụ thuộc làm tăng ước lượng cho khái niệm tiên quyết) chỉ bổ sung một phần nhỏ. Hai so sánh này chưa qua kiểm định DeLong và mới có trên một phần dữ liệu, nên chỉ được xem là xu hướng.
 
 ### 4.4. Khái niệm giữ lại và nhóm khái niệm
 
