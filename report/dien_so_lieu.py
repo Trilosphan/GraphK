@@ -111,6 +111,14 @@ def scalar(k: dict, expr: str) -> str:
     raise KeyError(expr)
 
 
+def safe_scalar(k: dict, expr: str) -> str:
+    """Số liệu của mô hình chưa chạy xong được để trống dạng ⟨…⟩ thay vì làm dừng cả quy trình."""
+    try:
+        return scalar(k, expr)
+    except (KeyError, StopIteration):
+        return f"⟨{expr}⟩"
+
+
 CITE = re.compile(r"\[(@[\w-]+(?:\s*;\s*@[\w-]+)*)\]")
 
 
@@ -139,7 +147,7 @@ def fill(md: str, k: dict, bib: dict | None = None) -> str:
     blocks = {"BANG1": bang1, "BANG2": bang2, "BANG3": bang3, "BANG4": bang4, "DELONG": delong, "CASE": case}
     for key, fn in blocks.items():
         md = md.replace(f"<!-- {key} -->", fn(k))
-    md = re.sub(r"\{\{([^}]+)\}\}", lambda m: scalar(k, m.group(1)), md)
+    md = re.sub(r"\{\{([^}]+)\}\}", lambda m: safe_scalar(k, m.group(1)), md)
     return cite(md, bib) if bib is not None else md
 
 
