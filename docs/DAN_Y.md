@@ -1,4 +1,4 @@
-# Đồ án 8 — Lần vết tri thức dựa trên đồ thị (GKT) với đồ thị tiên quyết tường minh
+# Đồ án 8 — Truy vết tri thức dựa trên đồ thị (GKT) với đồ thị tiên quyết tường minh
 
 > Môn học: Học máy (Machine Learning)
 > Mô hình trọng tâm: GKT (Graph-based Knowledge Tracing), lan truyền trạng thái tri thức trên đồ thị bằng mạng nơ-ron đồ thị (Graph Neural Network, GNN)
@@ -18,7 +18,7 @@
   - Junyi Academy có sẵn đồ thị quan hệ tiên quyết giữa các khái niệm, đã được đội ngũ sư phạm xác nhận thủ công (ví dụ: Đạo hàm là tiên quyết của Tích phân).
   - Các mô hình DKT và DKVMN ở đồ án 3–6 không khai thác thông tin cấu trúc này.
 
-### 1.2. Lần vết tri thức (Knowledge Tracing, KT)
+### 1.2. Truy vết tri thức (Knowledge Tracing, KT)
 - **Định nghĩa:** cho chuỗi tương tác `(q_1, a_1), …, (q_t, a_t)` của một người học, trong đó `q` là câu hỏi và `a ∈ {0, 1}` là kết quả trả lời. Bài toán ước lượng trạng thái tri thức (knowledge state) của người học và dự đoán xác suất trả lời đúng `P(a_{t+1} = 1 | q_{t+1}, lịch sử)`.
 - **Các họ mô hình:**
   - mô hình xác suất: BKT;
@@ -287,7 +287,7 @@ GraphK/
 
 | Tiếng Anh | Tiếng Việt |
 |---|---|
-| Knowledge Tracing (KT) | lần vết tri thức |
+| Knowledge Tracing (KT) | truy vết tri thức |
 | knowledge state / mastery | trạng thái tri thức / mức độ thành thạo |
 | Graph Neural Network (GNN) | mạng nơ-ron đồ thị |
 | Graph Convolutional Network (GCN) | mạng tích chập đồ thị |
