@@ -2,11 +2,11 @@
   "van_de": "Junyi Academy có bản đồ tiên quyết do đội ngũ sư phạm xác nhận, nhưng DKT/AKT bỏ qua cấu trúc này, còn các mô hình đồ thị hiện có lại tự suy đồ thị từ dữ liệu.",
   "do_thi_tach_roi": "Đồ thị thống kê và đồ thị chuyên gia trùng khoảng 1% cạnh (Jaccard ≈ 0,01): hai nguồn tri thức gần như tách rời, nên so sánh GKT-Expert với GKT-Stat có ý nghĩa.",
   "hinh2": "Trung vị giá trị gia tăng của cạnh chuyên gia theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau, chỉ nhỉnh hơn mặt bằng (0,013).",
-  "tieu_de_ket_qua": "GKT-Expert đạt AUC 0,795 trên tập kiểm tra (kết quả sơ bộ)",
+  "tieu_de_ket_qua": "GKT-Expert: AUC 0,795 trên tập kiểm tra (sơ bộ)",
   "ket_qua_chinh": "GKT-Expert: AUC 0,7946, ACC 0,8505, RMSE 0,3350 trên 38.375 người học của tập kiểm tra, sau 10 epoch. Đang chạy: GKT-Stat, GKT-Random, DKT, AKT, cập nhật bảng khi xong.",
   "truc_auc_min": 0.7,
   "truc_auc_max": 0.82,
-  "tieu_de_rq3": "Khái niệm giữ lại: AUC thấp hơn khoảng 0,035 (kết quả sơ bộ)",
+  "tieu_de_rq3": "Khái niệm giữ lại: AUC thấp hơn ~0,035 (sơ bộ)",
   "rq3": "GKT-Expert: AUC 0,7599 trên 108 khái niệm giữ lại, so với 0,7946 trên toàn tập. Đây là mốc để so với GKT-Stat: trên các khái niệm này đồ thị thống kê không có cạnh nào, nên nếu lợi thế của GKT-Stat (nếu có) biến mất ở đây thì đó là dấu hiệu rò rỉ gián tiếp. ⟨Cập nhật khi GKT-Stat chạy xong⟩",
   "cat_bo": "Đang chạy: GKT-Expert với nút gốc ảo cho nút cô lập, và GKT-Expert chỉ lan truyền chiều xuôi. ⟨Cập nhật khi xong⟩",
   "case_study": [

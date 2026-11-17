@@ -48,7 +48,7 @@ pres.defineSlideMaster({
 pres.defineSlideMaster({
   title: "NOI_DUNG", background: { color: HEX.lt1 },
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: M, y: 0.35, w: W - 2 * M, h: 0.9, fontSize: 32, bold: true, color: HEX.dk1, fontFace: THEME.headFontFace, valign: "middle" }, text: "" } },
+    { placeholder: { options: { name: "title", type: "title", x: M, y: 0.35, w: W - 2 * M, h: 0.9, fontSize: 28, bold: true, color: HEX.dk1, fontFace: THEME.headFontFace, valign: "middle" }, text: "" } },
   ],
   slideNumber: { x: W - 1.0, y: H - 0.5, w: 0.5, h: 0.3, fontSize: 11, color: HEX.accent4 },
 });
@@ -96,7 +96,7 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
 // 2 ---------------------------------------------------------------- vấn đề và câu hỏi nghiên cứu
 {
   const s = addSlide("NOI_DUNG", "Mở đầu");
-  s.addText("Đồ thị tiên quyết của chuyên gia có giúp dự đoán tốt hơn?", { placeholder: "title" });
+  s.addText("Đồ thị tiên quyết chuyên gia có giúp dự đoán?", { placeholder: "title" });
   text(s, T.van_de, { x: M, y: 1.45, w: W - 2 * M, h: 0.9, fontSize: 18, color: HEX.dk2 });
   const rq = [["RQ1", "GKT-Expert có vượt DKT, AKT (không dùng đồ thị)?", HEX.accent1],
     ["RQ2", "Tri thức chuyên gia đóng góp bao nhiêu so với tri thức thống kê, cùng kiến trúc, cùng 979 cạnh?", HEX.accent2],
@@ -195,7 +195,7 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
 // 8 ---------------------------------------------------------------- ba đồ thị và giao thức chống rò rỉ
 {
   const s = addSlide("NOI_DUNG", "Phương pháp");
-  s.addText("Ba đồ thị cùng 979 cạnh, một giao thức chống rò rỉ", { placeholder: "title" });
+  s.addText("Ba đồ thị cùng 979 cạnh và giao thức chống rò rỉ", { placeholder: "title" });
   const cols = [["Chuyên gia", "cạnh tiên quyết Junyi", graphRow("expert"), HEX.accent1],
     ["Thống kê", "AV(A→B) = P(B|A) − P(B), chỉ tập huấn luyện", graphRow("stat"), HEX.accent2],
     ["Ngẫu nhiên", "đối chứng âm, cùng số cạnh", graphRow("random"), HEX.accent4]];
@@ -217,7 +217,7 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
 // 9 ---------------------------------------------------------------- hình 2
 {
   const s = addSlide("NOI_DUNG", "Phương pháp");
-  s.addText("Hành vi làm bài không phân biệt được chiều tiên quyết", { placeholder: "title" });
+  s.addText("Hành vi không phân biệt được chiều tiên quyết", { placeholder: "title" });
   image(s, fig("hinh2_do_thi.png"), M, 1.35, W - 2 * M, 4.6, "Phân phối bậc và giá trị gia tăng của các đồ thị");
   text(s, T.hinh2, { x: M, y: 6.1, w: W - 2 * M - 0.8, h: 0.8, fontSize: 14, color: HEX.dk2 });
   s.addNotes(T.ghi_chu.hinh2);
