@@ -119,7 +119,7 @@ SL.cau_hoi = () => {
   text(s, [{ text: "Đầu vào: ", options: { bold: true } },
     { text: `nhật ký (khái niệm, kết quả) của từng người học và đồ thị tiên quyết có hướng G = (V, E), |V| = ${D.n_nut}, |E| = ${G.n_edges}. ` },
     { text: "Đầu ra:", options: { bold: true } }], { x: M, y: 1.4, w: 8.4, h: 0.95, fontSize: 17, color: HEX.dk2 });
-  formula(s, "kt", M + 8.6, 1.83, 18, W - 2 * M - 8.6);
+  formula(s, "kt", M + 8.6, 1.66, 18, W - 2 * M - 8.6);
   const rq = [["RQ1", "GKT-Expert có vượt DKT, AKT (không dùng đồ thị)?", HEX.accent1],
     ["RQ2", "Tri thức chuyên gia đóng góp bao nhiêu so với tri thức thống kê, cùng kiến trúc, cùng 979 cạnh?", HEX.accent2],
     ["RQ3", "Nếu đồ thị thống kê thắng: giá trị thật hay rò rỉ gián tiếp? Đánh giá thế nào cho công bằng?", HEX.accent3]];
@@ -477,7 +477,6 @@ const tableOpt = (o) => ({ fontFace: THEME.bodyFontFace, color: HEX.dk1, border:
 const head = (cols) => cols.map((h) => ({ text: h, options: { bold: true, fill: { color: HEX.lt2 } } }));
 
 SL.tom_tat = () => {
-  CRUMB = "Tóm tắt";
   const s = addSlide("NOI_DUNG");
   s.addText("Tóm tắt", { placeholder: "title" });
   const cols = [
@@ -528,13 +527,13 @@ const CHUONG = {
 SL.chuong = () => {
   const s = addSlide("CHUONG");
   s.addText(CUR_SEC, { placeholder: "title" });
-  s.addText(CHUONG[CUR_SEC] || "", { placeholder: "body" });
+  s.addText(CHUONG[CUR_SEC] || "", { placeholder: "body", align: "center" });
 };
 
 SL.aied = () => {
   CRUMB = "1.1 Trí tuệ nhân tạo trong giáo dục (AIED)";
   const s = addSlide("NOI_DUNG");
-  s.addText("Mô hình người học là lõi của hệ thống học tập thích ứng", { placeholder: "title" });
+  s.addText("Mô hình người học: lõi của học tập thích ứng", { placeholder: "title" });
   const c3 = [["Gia sư thông minh (ITS)", "hướng dẫn từng bước, phản hồi theo câu trả lời của người học", HEX.accent3],
     ["Học tập thích ứng", "chọn bài tập kế tiếp và lộ trình học theo năng lực hiện tại", HEX.accent2],
     ["Mô hình người học", "ước lượng mức thành thạo từng khái niệm; truy vết tri thức là bài toán lõi", HEX.accent1]];
@@ -588,7 +587,7 @@ SL.tong_hop_nc = () => {
   const rows = [head(["Nhóm", "Công trình", "Năm", "Nơi công bố", "Loại đồ thị", "Đồ thị chuyên gia"]),
     ...NC.map((r) => r.map((c) => ({ text: c }))),
     ["—", "GKT-Expert (đồ án)", "2026", "—", "tiên quyết chuyên gia, hai chiều", "có"].map((c) => ({ text: c, options: { bold: true, color: HEX.accent1 } }))];
-  s.addTable(rows, tableOpt({ x: M, y: 1.4, w: 8.6, colW: [0.7, 1.7, 0.7, 1.6, 2.6, 1.3], fontSize: 12 }));
+  s.addTable(rows, tableOpt({ x: M, y: 1.4, w: 8.6, colW: [0.85, 1.75, 0.7, 1.6, 2.4, 1.3], fontSize: 12 }));
   card(s, M + 8.9, 1.4, W - 2 * M - 8.9, 5.1, "FBE7DA", "khoang_trong");
   text(s, [{ text: "Khoảng trống", options: { bold: true, fontSize: 18, breakLine: true } },
     { text: "Chưa có đánh giá tách bạch đồ thị chuyên gia với đồ thị thống kê trong cùng một kiến trúc GKT, cùng số cạnh, kèm giao thức chống rò rỉ trên khái niệm giữ lại.", options: { fontSize: 15 } }],
@@ -671,7 +670,7 @@ SL.nhom_kn = () => {
       r.p_value < 1e-4 ? "< 10⁻⁴" : f(r.p_value, 3)])],
     tableOpt({ x: M + 6.9, y: 1.45, w: W - 2 * M - 6.9, colW: [0.95, 2.55, 1.0, 0.73], fontSize: 11 }));
   text(s, "Trên khái niệm cô lập trong đồ thị chuyên gia, ba biến thể GKT gần như bằng nhau: nút cô lập không nhận thông điệp lân cận, nên lợi thế chỉ xuất hiện ở nút có cạnh, đúng cơ chế lan truyền.",
-    { x: M, y: 5.6, w: W - 2 * M, h: 0.9, fontSize: 15, color: HEX.dk2 });
+    { x: M, y: 4.55, w: W - 2 * M, h: 0.9, fontSize: 16, color: HEX.dk2 });
   s.addNotes("Bảng V và Bảng VI của báo cáo. Hiệu AUC khoảng 0,003 có p rất nhỏ nhưng cần đọc kèm độ lớn hiệu.");
 };
 
@@ -693,8 +692,8 @@ SL.tai_lieu = () => {
   s.addText("Tài liệu tham khảo chính", { placeholder: "title" });
   const refs = T.tai_lieu_slide || [];
   const half = Math.ceil(refs.length / 2);
-  [refs.slice(0, half), refs.slice(half)].forEach((col, j) => text(s, col.map((r, i) => ({ text: r, options: { breakLine: i < col.length - 1, paraSpaceAfter: 5 } })),
-    { x: M + j * 6.15, y: 1.45, w: 5.9, h: 5.2, fontSize: 12 }));
+  [refs.slice(0, half), refs.slice(half)].forEach((col, j) => text(s, col.map((r, i) => ({ text: `[${j * half + i + 1}] ${r}`,
+    options: { breakLine: i < col.length - 1, paraSpaceAfter: 8 } })), { x: M + j * 6.15, y: 1.45, w: 5.9, h: 5.2, fontSize: 14 }));
   s.addNotes("Danh mục đầy đủ (25 tài liệu, định dạng IEEE) ở cuối bài báo.");
 };
 
