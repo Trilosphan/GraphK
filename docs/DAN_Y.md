@@ -5,7 +5,21 @@
 > Dữ liệu chính: Junyi Academy (835 khái niệm, đồ thị tiên quyết do chuyên gia sư phạm xác nhận) · Dữ liệu bổ sung: MOOCCubeX
 > Mức độ: Chuyên sâu · Môi trường thực nghiệm: Google Colab (GPU T4)
 
-**Quy ước thuật ngữ:** thuật ngữ được dịch theo cách dùng trong tài liệu học máy tiếng Việt. Lần xuất hiện đầu tiên ghi kèm thuật ngữ tiếng Anh trong ngoặc. Tên mô hình, tên độ đo và tên thư viện giữ nguyên. Bảng đối chiếu thuật ngữ ở cuối văn bản.
+**Quy ước thuật ngữ:** thuật ngữ được dịch theo cách dùng trong tài liệu học máy tiếng Việt. Lần xuất hiện đầu tiên ghi kèm thuật ngữ tiếng Anh trong ngoặc. Tên mô hình, tên độ đo và tên thư viện giữ nguyên. Bảng đối chiếu thuật ngữ ở Phụ lục E.
+
+---
+
+## Tóm tắt
+
+- **Bối cảnh và vấn đề:** các mô hình truy vết tri thức tuần tự (DKT, AKT) không dùng đồ thị tiên quyết mà đội ngũ sư phạm của Junyi Academy đã xác nhận. Các mô hình dựa trên đồ thị hiện có lại dùng đồ thị suy ra từ dữ liệu, nên chưa ai tách riêng được giá trị của tri thức chuyên gia.
+- **Phương pháp:** GKT lan truyền hai chiều trên đồ thị tiên quyết có hướng: hàm thông điệp riêng cho chiều xuôi (tiên quyết → phụ thuộc) và chiều ngược, cài đặt bằng danh sách cạnh nén. Cùng một kiến trúc được huấn luyện trên ba đồ thị có cùng 979 cạnh: chuyên gia, thống kê (giá trị gia tăng, chỉ tính trên tập huấn luyện) và ngẫu nhiên.
+- **Thiết lập:** Junyi 2015 với 835 khái niệm, 191.874 người học và 25,85 triệu tương tác. Dữ liệu chia theo người học; tập kiểm tra gồm 38.375 người học. Đồ án dùng 108 khái niệm giữ lại để kiểm soát rò rỉ gián tiếp. Mô hình cơ sở là DKT và AKT. Độ đo là AUC, ACC, RMSE, kèm kiểm định DeLong ghép cặp.
+- **Kết quả chính:** ⟨điền từ notebook 05: AUC của GKT-Expert so với GKT-Stat, GKT-Random, DKT, AKT; chênh lệch trên khái niệm giữ lại⟩.
+- **Phát hiện về dữ liệu:**
+  - đồ thị chuyên gia có một chu trình 3 nút và hai vòng tự thân;
+  - đồ thị thống kê chỉ trùng khoảng 1% cạnh với đồ thị chuyên gia;
+  - tương quan hành vi không phân biệt được chiều tiên quyết.
+- **Kết luận:** ⟨điền sau khi có kết quả⟩.
 
 ---
 
@@ -53,98 +67,112 @@
 - Đăng trên tạp chí xếp hạng Q1–Q4 theo Scimago (SJR), hoặc trên hội nghị hạng A/A\* theo CORE.
 - Có DOI hoặc trang kỷ yếu chính thức.
 
-Các công trình nền tảng trước 2020 (BKT 1994, DKT 2015, DKVMN 2017, GKT 2019) chỉ được dẫn ở mục 1.2 và mục 3, **không** tính vào danh sách này. Hạng Q là hạng của tạp chí theo SJR và cần đối chiếu lại trên scimagojr.com theo đúng năm công bố trước khi nộp.
+Các công trình nền tảng trước 2020 (BKT 1994, DKT 2015, DKVMN 2017, GKT 2019) chỉ được dẫn ở mục 1.2 và mục 3. Hạng Q là hạng của tạp chí theo SJR, cần đối chiếu lại trên scimagojr.com theo năm công bố trước khi nộp.
 
-Mỗi công trình được phân tích theo năm khía cạnh: **phương pháp/thuật toán · dữ liệu · ưu điểm · hạn chế · kết quả đánh giá**. Mục 2.4 tổng hợp và nêu hướng đề xuất.
+**Cách tổ chức:** các công trình được chia thành ba nhóm phương pháp cạnh tranh hoặc đi trước GKT-Expert. Mỗi nhóm trình bày theo bốn ý:
+- (i) các công trình tiêu biểu, mỗi công trình gồm phương pháp, dữ liệu, kết quả;
+- (ii) giả thuyết về hạn chế chung của nhóm;
+- (iii) bằng chứng cho hạn chế đó;
+- (iv) cầu nối, tức GKT-Expert khắc phục hạn chế đó như thế nào và đồ án kiểm chứng bằng thực nghiệm nào.
 
-### 2.1. Công trình trên tạp chí (Q1)
+Hai bài tổng quan dùng cho bối cảnh chung ở mục 1:
+- **[J5]** Abdelrahman, Wang & Nunes (2023), *Knowledge Tracing: A Survey*, ACM Computing Surveys 55(11), Q1;
+- **[J6]** Shen và cộng sự (2024), *A Survey of Knowledge Tracing: Models, Variants, and Applications*, IEEE Transactions on Learning Technologies 17, Q1.
 
-**[J1] JKT — Song và cộng sự (2021).** *JKT: A joint graph convolutional network based Deep Knowledge Tracing.* Information Sciences, 580, 510–523. DOI 10.1016/j.ins.2021.08.100.
-- **Phương pháp:**
-  - Xây dựng đồ thị quan hệ bài tập–bài tập và khái niệm–khái niệm, kết hợp với quan hệ bài tập–khái niệm.
-  - Học biểu diễn bằng mạng tích chập đồ thị kết hợp (joint Graph Convolutional Network, GCN). Thành phần mô hình hóa chuỗi dựa trên DKT.
-- **Dữ liệu:** bốn tập dữ liệu thực, trong đó có các tập ASSISTments.
-- **Ưu điểm:** liên kết được các bài tập thuộc những khái niệm khác nhau; có khả năng diễn giải, được minh họa qua nghiên cứu tình huống.
-- **Hạn chế:** đồ thị được xây dựng từ thống kê và nhãn khái niệm, không sử dụng đồ thị tiên quyết của chuyên gia; không phân biệt chiều của cạnh.
+### 2.1. Nhóm 1 — Truy vết tri thức không dùng đồ thị
 
-**[J2] Bi-CLKT — Song và cộng sự (2022).** *Bi-CLKT: Bi-Graph Contrastive Learning based Knowledge Tracing.* Knowledge-Based Systems, 241, 108274. DOI 10.1016/j.knosys.2022.108274.
-- **Phương pháp:**
-  - Học tương phản (contrastive learning) hai cấp trên đồ thị con bài tập–bài tập: cấp nút cho biểu diễn bài tập, cấp đồ thị cho biểu diễn khái niệm.
-  - Tầng dự đoán là mạng hồi quy (RNN) hoặc mạng tăng cường bộ nhớ (memory-augmented network).
-- **Dữ liệu:** bốn tập dữ liệu thực.
-- **Ưu điểm:** biểu diễn khái niệm có tính phân biệt cao hơn khi dữ liệu thưa.
-- **Hạn chế:** đồ thị được suy ra từ dữ liệu hành vi nên có nguy cơ khớp với chính phân phối của tập đánh giá; chi phí tính toán lớn.
+**Công trình tiêu biểu:**
+- **[C1] AKT** — Ghosh, Heffernan & Lan, KDD 2020 (A\*). *Vai trò trong đồ án: mô hình cơ sở chính.*
+  - Phương pháp: Transformer với chú ý suy giảm đơn điệu theo khoảng cách thời gian, biểu diễn nhúng câu hỏi theo mô hình Rasch.
+  - Kết quả: thuộc nhóm có AUC cao nhất trên nhiều tập dữ liệu chuẩn.
+- **[C4] simpleKT** — Liu và cộng sự, ICLR 2023 (A\*).
+  - Phương pháp: chú ý tích vô hướng thông thường kết hợp biến thiên theo câu hỏi (Rasch).
+  - Kết quả: luôn nằm trong top 3 AUC trên 7 tập dữ liệu, so với 12 mô hình học sâu.
+- **[C6] pyKT** — Liu và cộng sự, NeurIPS 2022 Datasets & Benchmarks.
+  - Nội dung: quy trình tiền xử lý và đánh giá chuẩn hóa cho truy vết tri thức học sâu (có `junyi2015`), cùng các cài đặt sẵn DKT, AKT, GKT.
 
-**[J3] DGEKT — Cui và cộng sự (2024).** *DGEKT: A Dual Graph Ensemble Learning Method for Knowledge Tracing.* ACM Transactions on Information Systems, 42(3), Article 78. DOI 10.1145/3638350.
-- **Phương pháp:**
-  - Cấu trúc đồ thị kép gồm siêu đồ thị (hypergraph) bài tập–khái niệm và đồ thị có hướng biểu diễn quan hệ chuyển tiếp giữa các tương tác.
-  - Hai nhánh được kết hợp bằng chưng cất tri thức trực tuyến (online knowledge distillation).
-- **Dữ liệu:** ba tập dữ liệu chuẩn (benchmark), so sánh với tám mô hình KT.
-- **Ưu điểm:** khai thác đồng thời quan hệ không thuần nhất và quan hệ có hướng.
-- **Hạn chế:** đồ thị có hướng được xây dựng từ thống kê chuyển tiếp, chưa được đối chiếu với tri thức chuyên gia.
+**Giả thuyết về hạn chế:** quan hệ giữa các khái niệm chỉ được học ngầm qua biểu diễn nhúng và trọng số chú ý. Khi một khái niệm có ít dữ liệu, hoặc người học chưa từng làm khái niệm đó, mô hình không có kênh tường minh để chuyển bằng chứng từ các khái niệm tiên quyết hay phụ thuộc.
 
-**[J4] HHSKT — Ni và cộng sự (2023).** *HHSKT: A learner–question interactions based heterogeneous graph neural network model for knowledge tracing.* Expert Systems with Applications, 215, 119334. DOI 10.1016/j.eswa.2022.119334.
-- **Phương pháp:** mạng nơ-ron đồ thị không thuần nhất (heterogeneous GNN) trên đồ thị người học–câu hỏi–khái niệm.
-- **Ghi chú:** chưa tiếp cận được toàn văn; cần đọc bản gốc trước khi phân tích ưu điểm và hạn chế.
+**Bằng chứng:**
+- simpleKT cho thấy phần lớn cải tiến kiến trúc chỉ cho chênh lệch AUC rất nhỏ khi đánh giá chuẩn hóa: biểu diễn ngầm đã bão hòa.
+- AKT và simpleKT đều không có thành phần nào mã hóa quan hệ tiên quyết.
 
-**[J5] Bài tổng quan — Abdelrahman, Wang & Nunes (2023).** *Knowledge Tracing: A Survey.* ACM Computing Surveys, 55(11), 1–37. DOI 10.1145/3569576.
-- **Sử dụng cho:** mục 1.2 (lịch sử phát triển, phân loại mô hình, các tập dữ liệu chuẩn) và việc xác định khoảng trống nghiên cứu.
+**Cầu nối sang GKT-Expert:**
+- GKT-Expert đưa đồ thị tiên quyết vào làm kênh lan truyền tường minh: trả lời khái niệm `i` cập nhật trực tiếp trạng thái của các khái niệm tiên quyết và phụ thuộc của `i`.
+- Kiểm chứng (RQ1): so AUC của GKT-Expert với DKT và AKT trên cùng tập kiểm tra, cùng giao thức pyKT, kèm kiểm định DeLong ghép cặp.
 
-**[J6] Bài tổng quan — Shen và cộng sự (2024).** *A Survey of Knowledge Tracing: Models, Variants, and Applications.* IEEE Transactions on Learning Technologies, 17, 1898–1919. DOI 10.1109/TLT.2024.3383325.
-- **Nội dung:** phân loại ba nhóm mô hình KT cơ bản và các biến thể; kèm thư viện mã nguồn mở.
+### 2.2. Nhóm 2 — Truy vết tri thức dùng đồ thị suy ra từ dữ liệu
 
-### 2.2. Công trình trên hội nghị hạng A\*/A
+**Công trình tiêu biểu:**
+- **[J1] JKT** — Song và cộng sự, *Information Sciences* 580 (2021), Q1.
+  - Phương pháp: GCN kết hợp trên đồ thị bài tập–bài tập và khái niệm–khái niệm, phần chuỗi theo DKT.
+  - Dữ liệu và kết quả: 4 tập dữ liệu, vượt các mô hình cơ sở, có nghiên cứu tình huống về khả năng diễn giải.
+- **[J2] Bi-CLKT** — Song và cộng sự, *Knowledge-Based Systems* 241 (2022), Q1.
+  - Phương pháp: học tương phản hai cấp (nút, đồ thị) trên đồ thị con bài tập–bài tập.
+  - Dữ liệu và kết quả: 4 tập dữ liệu, vượt các mô hình cơ sở.
+- **[J3] DGEKT** — Cui và cộng sự, *ACM Transactions on Information Systems* 42(3) (2024), Q1.
+  - Phương pháp: siêu đồ thị bài tập–khái niệm và đồ thị chuyển tiếp có hướng, kết hợp bằng chưng cất tri thức trực tuyến.
+  - Dữ liệu và kết quả: 3 tập dữ liệu, so với 8 mô hình cơ sở.
+- **[J4] HHSKT** — Ni và cộng sự, *Expert Systems with Applications* 215 (2023), Q1.
+  - Phương pháp: GNN không thuần nhất trên đồ thị người học–câu hỏi–khái niệm. *Cần đọc toàn văn để bổ sung chi tiết.*
+- **[C3] GIKT** — Yang và cộng sự, ECML-PKDD 2020 (A), LNCS 12457.
+  - Phương pháp: GCN lan truyền biểu diễn nhúng trên đồ thị câu hỏi–kỹ năng.
+  - Kết quả: AUC tăng ít nhất khoảng 1 điểm phần trăm trên 3 tập dữ liệu.
 
-**[C1] AKT — Ghosh, Heffernan & Lan (2020).** *Context-Aware Attentive Knowledge Tracing.* KDD 2020. DOI 10.1145/3394486.3403282. **Vai trò trong đồ án: mô hình cơ sở (baseline) chính.**
-- **Phương pháp:**
-  - Kiến trúc Transformer với cơ chế chú ý suy giảm đơn điệu (monotonic attention) theo khoảng cách thời gian.
-  - Biểu diễn nhúng (embedding) câu hỏi dựa trên mô hình Rasch.
-- **Ưu điểm:** thuộc nhóm có AUC cao nhất trên nhiều tập dữ liệu chuẩn.
-- **Hạn chế:** không khai thác cấu trúc tiên quyết.
+**Giả thuyết về hạn chế:** đồ thị được suy ra từ chính dữ liệu hành vi, nên có thể chỉ phản ánh tương quan (ví dụ năng lực chung của người học) chứ không phản ánh quan hệ tiên quyết. Khi đánh giá trên cùng phân phối hành vi, AUC cao có thể là rò rỉ thông tin gián tiếp. Ngoài ra đồ thị không phủ được các khái niệm thiếu dữ liệu.
 
-**[C2] SKT — Tong và cộng sự (2020).** *Structure-based Knowledge Tracing: An Influence Propagation View.* IEEE ICDM 2020, 541–550.
-- **Phương pháp:** lan truyền ảnh hưởng trên cấu trúc tri thức. Quan hệ có hướng (tiên quyết) được lan truyền từng phần (partial propagation); quan hệ vô hướng (tương tự) được lan truyền đồng bộ (synchronous propagation).
-- **Ưu điểm:** gần nhất với đồ án do sử dụng quan hệ tiên quyết có hướng. Đây là căn cứ cho cơ chế lan truyền hai chiều ở mục 3.3 và cho thuộc tính `edge_type`.
-- **Hạn chế:** đồ thị tiên quyết chủ yếu được suy ra từ dữ liệu; chưa tách riêng đóng góp của tri thức chuyên gia.
+**Bằng chứng:**
+- Các công trình trên chỉ đánh giá trên toàn tập kiểm tra, không đánh giá riêng trên những khái niệm chưa dùng để xây dựng đồ thị.
+- Phân tích của đồ án (notebook 03) cho thấy đồ thị thống kê trên Junyi chỉ trùng khoảng 1% cạnh với đồ thị chuyên gia.
+- Trung vị giá trị gia tăng theo chiều xuôi (0,020) và chiều ngược (0,022) gần như bằng nhau: tương quan hành vi không phân biệt được chiều tiên quyết.
 
-**[C3] GIKT — Yang và cộng sự (2020).** *GIKT: A Graph-based Interaction Model for Knowledge Tracing.* ECML-PKDD 2020, LNCS 12457, 299–315. DOI 10.1007/978-3-030-67658-2_18.
-- **Phương pháp:**
-  - Dùng GCN để lan truyền biểu diễn nhúng trên đồ thị câu hỏi–kỹ năng.
-  - Mô hình hóa tương tác giữa trạng thái hiện tại, các bài tập liên quan trong lịch sử, câu hỏi đích và các kỹ năng liên quan.
-- **Kết quả:** đạt kết quả tốt nhất hiện có (state of the art) trên ba tập dữ liệu, AUC tăng ít nhất khoảng 1 điểm phần trăm.
+**Cầu nối sang GKT-Expert:**
+- Đồ thị chuyên gia độc lập với dữ liệu làm bài, nên vẫn có cạnh cho khái niệm ít dữ liệu và có chiều xác định.
+- Kiểm chứng (RQ2, RQ3):
+  - cùng kiến trúc GKT, cùng 979 cạnh, so đồ thị chuyên gia với đồ thị thống kê (chỉ tính trên tập huấn luyện) và đồ thị ngẫu nhiên;
+  - đo AUC riêng trên 108 khái niệm giữ lại, nơi đồ thị thống kê không có cạnh nào.
 
-**[C4] simpleKT — Liu và cộng sự (2023).** *simpleKT: A Simple But Tough-to-Beat Baseline for Knowledge Tracing.* ICLR 2023.
-- **Vai trò:** mô hình cơ sở mạnh bổ sung.
-- **Ý nghĩa đối với đồ án:** công trình cho thấy nhiều mô hình phức tạp không vượt được một mô hình cơ sở đơn giản khi được đánh giá theo giao thức chuẩn hóa. Đây là lý do đồ án tuân theo giao thức đánh giá của pyKT.
+### 2.3. Nhóm 3 — Truy vết tri thức có quan hệ tiên quyết
 
-**[C5] PSI-KT — Zhou và cộng sự (2024).** *Predictive, scalable and interpretable knowledge tracing on structured domains.* ICLR 2024.
-- **Phương pháp:** mô hình sinh phân cấp (hierarchical generative model), suy luận đồng thời đặc trưng nhận thức của từng người học và một đồ thị tiên quyết dùng chung. Độ mạnh của quan hệ tiên quyết được ước lượng trực tiếp từ dữ liệu làm bài.
-- **Ưu điểm:** có khả năng diễn giải theo thiết kế; áp dụng được khi không có bản đồ tri thức của chuyên gia.
-- **Liên hệ với đồ án:** đại diện cho hướng "đồ thị tiên quyết suy ra từ dữ liệu", đối lập trực tiếp với đồ thị chuyên gia trong RQ2.
+**Công trình tiêu biểu:**
+- **[C2] SKT** — Tong và cộng sự, IEEE ICDM 2020 (A\*).
+  - Phương pháp: lan truyền ảnh hưởng trên cấu trúc tri thức; quan hệ tiên quyết (có hướng) lan truyền từng phần, quan hệ tương tự (vô hướng) lan truyền đồng bộ.
+- **[C5] PSI-KT** — Zhou và cộng sự, ICLR 2024 (A\*).
+  - Phương pháp: mô hình sinh phân cấp suy ra đồng thời đặc trưng nhận thức của từng người học và một đồ thị tiên quyết dùng chung.
+  - Kết quả: dự đoán nhiều bước tốt, suy luận mở rộng được, có khả năng diễn giải; chỉ đánh giá trên dữ liệu môn Toán.
 
-**[C6] pyKT — Liu và cộng sự (2022).** *pyKT: A Python Library to Benchmark Deep Learning based Knowledge Tracing Models.* NeurIPS 2022 Datasets & Benchmarks Track.
-- **Nội dung:** quy trình tiền xử lý chuẩn hóa (có `junyi2015`) và cài đặt sẵn DKT, AKT, GKT, simpleKT. Đồ án dùng làm khung đánh giá đối chứng.
+**Giả thuyết về hạn chế:** cả hai công trình đều ước lượng cấu trúc tiên quyết từ dữ liệu, hoặc dùng cấu trúc mà không tách riêng nguồn gốc của nó. Vì vậy chưa trả lời được câu hỏi: tri thức chuyên gia đóng góp bao nhiêu so với việc chỉ có thêm một cấu trúc bất kỳ.
 
-### 2.3. Nguồn dữ liệu
-- **Junyi:** Chang, Hsu & Chen (2015), EDM 2015; dữ liệu công bố trên PSLC DataShop. Công trình này được trích dẫn như nguồn dữ liệu, không tính vào danh sách nghiên cứu liên quan.
-- **MOOCCubeX:** Yu và cộng sự (2021), CIKM 2021, 4643–4652. Kho mã THU-KEG/MOOCCubeX cung cấp script tải dữ liệu; quan hệ tiên quyết các ngành Toán, Tâm lý học và Khoa học máy tính đã được hiệu chỉnh.
+**Bằng chứng:**
+- Trong GKT gốc (Nakagawa và cộng sự, 2019), các đồ thị thử nghiệm đều là đồ thị đầy đủ, đồ thị chuyển tiếp, hoặc đồ thị học được (PAM, MHA, VAE); không có đồ thị chuyên gia.
+- PSI-KT nêu rõ ưu điểm là áp dụng được khi không có bản đồ tri thức chuyên gia, tức không so sánh với bản đồ đó.
 
-### 2.4. Tổng hợp và hướng đề xuất
+**Cầu nối sang GKT-Expert:**
+- GKT-Expert dùng trực tiếp đồ thị chuyên gia của Junyi, với cơ chế lan truyền hai chiều theo tinh thần của SKT (hàm thông điệp riêng cho chiều xuôi và chiều ngược).
+- Kiểm chứng:
+  - đối chứng âm GKT-Random (cùng số cạnh) tách hiệu ứng "có cấu trúc" khỏi hiệu ứng "đúng cấu trúc";
+  - nghiên cứu cắt bỏ một chiều/hai chiều kiểm tra giá trị của thông tin về chiều cạnh.
 
-| Công trình | Năm | Nơi công bố | Hạng | Loại đồ thị | Có hướng | Đồ thị chuyên gia |
-|---|---|---|---|---|---|---|
-| JKT | 2021 | Information Sciences | Q1 | bài tập–bài tập, khái niệm–khái niệm | không | không |
-| Bi-CLKT | 2022 | Knowledge-Based Systems | Q1 | bài tập–bài tập (học tương phản) | không | không |
-| DGEKT | 2024 | ACM TOIS | Q1 | siêu đồ thị + đồ thị chuyển tiếp | có | không |
-| HHSKT | 2023 | Expert Syst. Appl. | Q1 | đồ thị không thuần nhất | — | không |
-| AKT | 2020 | KDD | A\* | không dùng đồ thị | — | — |
-| SKT | 2020 | ICDM | A\* | tiên quyết + tương tự | có | một phần |
-| GIKT | 2020 | ECML-PKDD | A | câu hỏi–kỹ năng | không | không |
-| simpleKT | 2023 | ICLR | A\* | không dùng đồ thị | — | — |
-| PSI-KT | 2024 | ICLR | A\* | tiên quyết suy ra từ dữ liệu | có | không |
+### 2.4. Tổng hợp
 
-- **Khoảng trống nghiên cứu:** chưa có đánh giá tách bạch giữa đồ thị chuyên gia và đồ thị thống kê trong **cùng một kiến trúc GKT**, kèm giao thức chống rò rỉ trên tập khái niệm giữ lại.
-- **Hướng đề xuất:** GKT sử dụng đồ thị tiên quyết chuyên gia của Junyi, với cơ chế lan truyền hai chiều theo SKT. Mô hình được so sánh với GKT-Stat (cùng số cạnh), AKT, simpleKT và DKT.
+| Nhóm | Công trình | Năm | Nơi công bố | Hạng | Loại đồ thị | Có hướng | Đồ thị chuyên gia |
+|---|---|---|---|---|---|---|---|
+| 1 | AKT | 2020 | KDD | A\* | không dùng | — | — |
+| 1 | simpleKT | 2023 | ICLR | A\* | không dùng | — | — |
+| 2 | JKT | 2021 | Information Sciences | Q1 | bài tập–bài tập, khái niệm–khái niệm | không | không |
+| 2 | Bi-CLKT | 2022 | Knowledge-Based Systems | Q1 | bài tập–bài tập (học tương phản) | không | không |
+| 2 | DGEKT | 2024 | ACM TOIS | Q1 | siêu đồ thị + đồ thị chuyển tiếp | có | không |
+| 2 | HHSKT | 2023 | Expert Syst. Appl. | Q1 | không thuần nhất | — | không |
+| 2 | GIKT | 2020 | ECML-PKDD | A | câu hỏi–kỹ năng | không | không |
+| 3 | SKT | 2020 | ICDM | A\* | tiên quyết + tương tự | có | một phần |
+| 3 | PSI-KT | 2024 | ICLR | A\* | tiên quyết suy ra từ dữ liệu | có | không |
+| — | **GKT-Expert (đồ án)** | 2026 | — | — | **tiên quyết chuyên gia, lan truyền hai chiều** | **có** | **có** |
+
+**Khoảng trống nghiên cứu:** chưa có đánh giá tách bạch giữa đồ thị chuyên gia và đồ thị thống kê trong cùng một kiến trúc GKT, cùng số cạnh, kèm giao thức chống rò rỉ trên tập khái niệm giữ lại.
+
+**Nguồn dữ liệu** (trích dẫn như nguồn dữ liệu, không tính vào danh sách trên):
+- Junyi: Chang, Hsu & Chen (2015), EDM 2015; PSLC DataShop.
+- MOOCCubeX: Yu và cộng sự (2021), CIKM 2021, 4643–4652.
 
 ---
 
@@ -261,13 +289,13 @@ GraphK/
   - thời gian huấn luyện và bộ nhớ sử dụng.
 
 ### 4.3. Kết quả
-- **Bảng 1:** AUC và ACC của DKT, AKT, simpleKT, GKT-Dense, GKT-Random, GKT-Stat, GKT-Expert.
+- **Bảng 1:** AUC, ACC, RMSE của DKT, AKT, GKT-Random, GKT-Stat, GKT-Expert. GKT-Dense bị loại vì vượt bộ nhớ T4; simpleKT để lại cho hướng phát triển.
 - **Bảng 2:** nghiên cứu cắt bỏ về cách xử lý nút cô lập và lan truyền một chiều so với hai chiều.
 - **Bảng 3:** AUC trên tập khái niệm giữ lại (RQ3).
-- **Hình:**
-  - đường cong ROC;
-  - trực quan hóa trạng thái thành thạo trên đồ thị của một người học điển hình;
-  - mức trùng lặp cạnh giữa đồ thị Expert và đồ thị Stat (hệ số Jaccard).
+- **Bảng 4:** AUC theo nhóm khái niệm (cô lập, bậc thấp, bậc cao trong đồ thị chuyên gia; cô lập trong đồ thị thống kê).
+- **Kiểm định DeLong ghép cặp** cho hiệu AUC, trên toàn tập kiểm tra và trên khái niệm giữ lại.
+- **Hình:** xem mục Kế hoạch hình (Hình 1–5).
+- **Case study:** một người học trong tập kiểm tra làm bài trên một chuỗi tiên quyết. So sánh mức thành thạo dự đoán theo từng bước của GKT-Expert, GKT-Stat và DKT (Hình 5).
 
 ### 4.4. Đối sánh và thảo luận (trả lời các câu hỏi phản biện)
 - **So với AKT:** đồ thị chuyên gia có bù được khoảng cách hiệu năng so với một mô hình chú ý mạnh hay không?
@@ -275,7 +303,7 @@ GraphK/
   - Kết quả này không đủ để phủ nhận giá trị của tri thức sư phạm.
   - Đồ thị thống kê có thể chỉ khớp tốt hơn với chính phân phối hành vi mà tập đánh giá đo lường. Đây là một dạng rò rỉ thông tin gián tiếp.
   - Kiểm chứng bằng kết quả trên tập khái niệm giữ lại: nếu khoảng cách thu hẹp hoặc đảo chiều thì giả thuyết rò rỉ được ủng hộ.
-- **Khả năng khái quát hóa:** kết quả chuyển giao sang MOOCCubeX.
+- **Khả năng khái quát hóa (RQ4):** chưa thực hiện, nằm ngoài phạm vi kết quả; không đưa ra khẳng định về MOOCCubeX.
 - **Giới hạn của nghiên cứu:**
   - chỉ có một loại cạnh;
   - đồ thị Junyi là đồ thị bài tập, chưa hẳn là đồ thị khái niệm;
@@ -292,7 +320,42 @@ GraphK/
 
 ---
 
-## Bảng đối chiếu thuật ngữ
+## Kế hoạch hình
+
+| Hình | Mã hình | Loại | Nội dung và mục tiêu | Nguồn số liệu | Tỉ lệ | Đặt ở mục |
+|---|---|---|---|---|---|---|
+| 1 | `fig_kien_truc_gkt_hai_chieu` | sơ đồ | **Sơ đồ kiến trúc GKT lan truyền hai chiều:** tương tác `(q_t, a_t)` → biểu diễn nhúng → `f_self` cho nút được trả lời; `f_fwd` tới khái niệm phụ thuộc, `f_bwd` tới khái niệm tiên quyết → cổng xóa–thêm → GRU → dự đoán `P(a_{t+1})`. Thể hiện rõ hai chiều cạnh và việc chỉ cập nhật nút lân cận. | mục 3.3 | 16:9 | 3.3 |
+| 2 | `fig_do_thi_chuyen_gia_va_thong_ke` | biểu đồ | So sánh cấu trúc đồ thị: phân phối bậc của đồ thị chuyên gia, thống kê và ngẫu nhiên; số nút cô lập; Jaccard có hướng ≈ 0,01. Kèm biểu đồ hộp giá trị gia tăng của cạnh chuyên gia theo chiều xuôi, chiều ngược và của mọi cặp. Mục tiêu: chứng minh hai nguồn tri thức tách rời. | notebook 03 | 3:2 | 3.4 |
+| 3 | `fig_duong_cong_hoc` | biểu đồ | AUC kiểm định theo epoch của 5 mô hình. Mục tiêu: so tốc độ hội tụ và điểm dừng sớm. | notebook 05 (`hinh1_duong_cong_hoc.png`) | 16:9 | 4.3 |
+| 4 | `fig_auc_khai_niem_giu_lai` | biểu đồ | Cột ghép AUC trên toàn tập kiểm tra và trên khái niệm giữ lại cho từng mô hình. Mục tiêu: trả lời RQ3 (rò rỉ gián tiếp). | notebook 05 (`hinh2_auc_giu_lai.png`) | 16:9 | 4.4 |
+| 5 | `fig_case_study_nguoi_hoc` | biểu đồ | Case study: một người học trong tập kiểm tra làm bài trên một chuỗi tiên quyết. Bản đồ nhiệt mức thành thạo dự đoán theo từng bước cho khái niệm tiên quyết và phụ thuộc, so sánh GKT-Expert, GKT-Stat và DKT; đánh dấu kết quả thật. Mục tiêu: minh họa cách lan truyền theo cạnh tiên quyết. | notebook 05 (`hinh3_case_study.png`) | 16:9 | 4.5 |
+
+---
+
+## Phụ lục
+
+### Phụ lục A. Siêu tham số
+
+| Mô hình | Tham số chính | Cỡ lô | Tối ưu |
+|---|---|---|---|
+| GKT (cả ba đồ thị) | ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập | 128 | Adam, tốc độ học 10⁻³, tối đa 20 epoch, dừng sớm sau 3 epoch |
+| DKT | nhúng 64, LSTM 64, dropout 0,1 | 128 | như trên |
+| AKT | `d_model` 256, 4 khối, 8 head, dropout 0,2 (cài đặt pyKT) | 64 | như trên |
+| Đồ thị thống kê | ngưỡng thành thạo 0,5; hỗ trợ tối thiểu 50; ưu tiên 1 cạnh vào mỗi nút; 979 cạnh | — | — |
+
+### Phụ lục B. Đặc trưng và bất thường của dữ liệu
+- Bảng bài tập có 837 dòng nhưng chỉ 835 tên khác nhau (`matrix_app_fruit_oil`, `matrix_mul_two` bị lặp); 113 khái niệm không có tương tác.
+- Đồ thị chuyên gia gồm 979 cạnh, 59 nút cô lập, 38 nút gốc, 69 thành phần liên thông yếu (thành phần lớn nhất có 744 nút).
+- Chu trình: `adding_and_subtracting_radicals` → `radical_multiplication_and_division` → `simplifying_radicals` → quay lại bài đầu. Vòng tự thân bị loại: `proportions_1`, `number_sense_length_l1`.
+
+### Phụ lục C. Tập khái niệm giữ lại
+- 108 khái niệm, phân bố theo lĩnh vực (`area`) và chủ đề (`topic`) lấy từ `heldout_concepts.csv`.
+
+### Phụ lục D. Tái lập và cấu trúc kho mã
+- Notebook 01–05 chạy trên Colab, cấu trúc kho mã như mục 3.5, 33 ca kiểm thử đơn vị.
+- Sản phẩm đầu ra: báo cáo LaTeX (PDF), báo cáo Word (`.docx`), slide seminar (`.pptx`) có case study.
+
+### Phụ lục E. Bảng đối chiếu thuật ngữ
 
 | Tiếng Anh | Tiếng Việt |
 |---|---|
@@ -353,3 +416,10 @@ GraphK/
 16. Piech, C., et al. (2015). Deep Knowledge Tracing. *NeurIPS 2015*.
 17. Nakagawa, H., Iwasawa, Y., & Matsuo, Y. (2019). Graph-based Knowledge Tracing: Modeling Student Proficiency Using Graph Neural Network. *IEEE/WIC/ACM WI 2019*.
 18. Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks. *ICLR 2017*.
+19. Hochreiter, S., & Schmidhuber, J. (1997). Long Short-Term Memory. *Neural Computation*, 9(8), 1735–1780.
+20. Cho, K., et al. (2014). Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation. *EMNLP 2014*.
+21. Vaswani, A., et al. (2017). Attention Is All You Need. *NeurIPS 2017*.
+22. Kingma, D. P., & Ba, J. (2015). Adam: A Method for Stochastic Optimization. *ICLR 2015*.
+23. Zhang, J., Shi, X., King, I., & Yeung, D.-Y. (2017). Dynamic Key-Value Memory Networks for Knowledge Tracing. *WWW 2017*. (nguồn của cổng xóa–thêm)
+24. DeLong, E. R., DeLong, D. M., & Clarke-Pearson, D. L. (1988). Comparing the areas under two or more correlated receiver operating characteristic curves: a nonparametric approach. *Biometrics*, 44(3), 837–845.
+25. Sun, X., & Xu, W. (2014). Fast implementation of DeLong's algorithm for comparing the areas under correlated receiver operating characteristic curves. *IEEE Signal Processing Letters*, 21(11), 1389–1393.

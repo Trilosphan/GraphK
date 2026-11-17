@@ -387,6 +387,8 @@ NB04 = notebook([
 | DKT | LSTM | không dùng đồ thị |
 | AKT | Transformer (cài đặt của pyKT) | không dùng đồ thị |
 
+**Nghiên cứu cắt bỏ** (`RUN_ABLATIONS = True`): GKT-Expert với nút gốc ảo cho nút cô lập, và GKT-Expert chỉ lan truyền chiều xuôi.
+
 GKT-Dense không có trong danh sách mặc định: với 835 nút, mỗi bước phải truyền thông điệp tới 834 nút, vượt bộ nhớ GPU T4 ở cỡ lô thông thường.
 
 **Chế độ chạy:**
@@ -421,6 +423,15 @@ EXPERIMENTS = [
     # AKT: cơ chế chú ý cần nhiều ma trận 200×200 mỗi head; cỡ lô 128 vượt 15 GB của T4
     ('akt', 'none', {'d_model': 256, 'n_blocks': 4, 'dropout': 0.2}, {'batch_size': 64}),
 ]
+
+# Nghiên cứu cắt bỏ (Bảng 2 của báo cáo), chạy trên phần 0 sau các thực nghiệm chính
+RUN_ABLATIONS = False
+ABLATIONS = [
+    ('gkt', 'expert', {**GKT_KW, 'isolated': 'root'}, {'tag': 'root'}),          # nút gốc ảo cho nút cô lập
+    ('gkt', 'expert', {**GKT_KW, 'bidirectional': False}, {'tag': 'unidir'}),    # chỉ lan truyền chiều xuôi
+]
+if RUN_ABLATIONS:
+    EXPERIMENTS = EXPERIMENTS + ABLATIONS
 
 RUNS = Path(DRIVE) / ('runs_thu' if QUICK else 'runs')
 QUICK_LIMITS = {'max_epochs': 1, 'max_train_batches': 300, 'max_eval_batches': 100}"""),
@@ -475,10 +486,138 @@ print('Số đoạn huấn luyện của một epoch đầy đủ:', n_train_seg
 summary"""),
 ], gpu=True)
 
+NB05 = notebook([
+    md("""\
+# 05 — Phân tích kết quả
+
+**Đầu vào:** `GraphK/runs/` (notebook 04), `GraphK/processed/junyi/` (notebook 02, 03).
+**Đầu ra:** `GraphK/analysis/` gồm các bảng (`.csv`), hình (`.png`) và `tom_tat.json` (số liệu cho báo cáo).
+
+Các phân tích:
+1. **Bảng 1** — AUC, ACC, RMSE trên tập kiểm tra của mọi thực nghiệm (RQ1, RQ2).
+2. **Bảng 2** — nghiên cứu cắt bỏ: xử lý nút cô lập, lan truyền một chiều/hai chiều.
+3. **Bảng 3** — AUC trên tập khái niệm giữ lại và trên các khái niệm còn lại (RQ3).
+4. **Bảng 4** — AUC theo nhóm khái niệm: cô lập, bậc thấp, bậc cao trong đồ thị chuyên gia; khái niệm cô lập trong đồ thị thống kê.
+5. **Kiểm định DeLong ghép cặp** cho hiệu AUC giữa các mô hình, trên toàn tập kiểm tra và trên khái niệm giữ lại. Kiểm định giả định các dự đoán độc lập (bỏ qua tương quan trong cùng người học), và với hàng triệu dự đoán thì hiệu rất nhỏ cũng có ý nghĩa thống kê. Vì vậy cần đọc kèm độ lớn hiệu AUC.
+6. **Hình** — đường cong học (AUC kiểm định theo epoch), AUC toàn tập và AUC khái niệm giữ lại.
+
+Không cần GPU."""),
+    code(SETUP),
+    md("## 0. Cấu hình"),
+    code("""\
+from pathlib import Path
+
+PROC = Path(DRIVE) / 'processed' / 'junyi'
+RUNS = Path(DRIVE) / 'runs'
+OUT = Path(DRIVE) / 'analysis'
+OUT.mkdir(parents=True, exist_ok=True)
+FOLD, SEED = 0, 42
+
+name = lambda model, graph, tag='': f'{model}-{graph}-fold{FOLD}-seed{SEED}' + (f'-{tag}' if tag else '')
+MAIN = {'GKT-Expert': name('gkt', 'expert'), 'GKT-Stat': name('gkt', 'stat'), 'GKT-Random': name('gkt', 'random'),
+        'DKT': name('dkt', 'none'), 'AKT': name('akt', 'none')}
+ABL = {'GKT-Expert (hai chiều, tự cập nhật)': name('gkt', 'expert'),
+       'GKT-Expert + nút gốc ảo': name('gkt', 'expert', 'root'),
+       'GKT-Expert một chiều': name('gkt', 'expert', 'unidir')}"""),
+    md("## 1. Bảng 1 — Kết quả trên tập kiểm tra"),
+    code("""\
+import pandas as pd
+from graphk.analysis import load_results, results_table
+
+results = load_results(RUNS)
+table = results_table(results)
+label = {v: k for k, v in {**ABL, **MAIN}.items()}
+table.insert(0, 'mô hình', table['thực nghiệm'].map(label))
+table = table.dropna(subset=['mô hình']).sort_values('AUC kiểm tra', ascending=False)
+table.to_csv(OUT / 'bang1_ket_qua.csv', index=False)
+print('Thực nghiệm chưa có kết quả:', [k for k, v in MAIN.items() if v not in results] or 'không có')
+table.round(4)"""),
+    md("## 2. Bảng 2 — Nghiên cứu cắt bỏ"),
+    code("""\
+abl = table[table['thực nghiệm'].isin(ABL.values())].copy()
+abl['mô hình'] = abl['thực nghiệm'].map({v: k for k, v in ABL.items()})
+abl.to_csv(OUT / 'bang2_cat_bo.csv', index=False)
+abl[['mô hình', 'epoch', 'AUC kiểm định', 'AUC kiểm tra', 'AUC khái niệm giữ lại']].round(4)"""),
+    md("## 3. Bảng 3 — Khái niệm giữ lại (RQ3)"),
+    code("""\
+main = table[table['thực nghiệm'].isin(MAIN.values())].copy()
+main['mô hình'] = main['thực nghiệm'].map({v: k for k, v in MAIN.items()})
+b3 = main[['mô hình', 'AUC kiểm tra', 'AUC khái niệm còn lại', 'AUC khái niệm giữ lại']].copy()
+b3['chênh lệch (còn lại − giữ lại)'] = b3['AUC khái niệm còn lại'] - b3['AUC khái niệm giữ lại']
+b3.to_csv(OUT / 'bang3_khai_niem_giu_lai.csv', index=False)
+b3.round(4)"""),
+    md("## 4. Bảng 4 — AUC theo nhóm khái niệm"),
+    code("""\
+import numpy as np
+import scipy.sparse as sp
+from graphk.analysis import load_predictions, node_groups, auc_by_group
+
+preds = {k: load_predictions(RUNS, v) for k, v in MAIN.items() if v in results}
+groups = node_groups(sp.load_npz(PROC / 'adj_expert.npz'), sp.load_npz(PROC / 'graphs' / f'adj_stat_fold{FOLD}.npz'))
+b4a = auc_by_group(preds, groups['nhóm chuyên gia'].to_numpy())
+stat_iso = np.where(groups['cô lập trong đồ thị thống kê'], 'cô lập trong đồ thị thống kê', 'có cạnh trong đồ thị thống kê')
+b4b = auc_by_group(preds, stat_iso)
+b4 = pd.concat([b4a, b4b])
+counts = {g: int(np.isin(next(iter(preds.values()))['q'], groups.index[(groups['nhóm chuyên gia'] == g)]).sum())
+          for g in b4a.index}
+b4.to_csv(OUT / 'bang4_nhom_khai_niem.csv')
+print('Số dự đoán theo nhóm chuyên gia:', counts)
+b4.round(4)"""),
+    md("## 5. Kiểm định DeLong ghép cặp"),
+    code("""\
+from graphk.analysis import pairwise_tests
+
+heldout = pd.read_csv(PROC / 'graphs' / 'heldout_concepts.csv')['node_id'].to_numpy()
+pairs = [('GKT-Expert', 'GKT-Stat'), ('GKT-Expert', 'GKT-Random'), ('GKT-Expert', 'DKT'),
+         ('GKT-Expert', 'AKT'), ('GKT-Stat', 'GKT-Random'), ('DKT', 'AKT')]
+t_all = pairwise_tests(preds, pairs).assign(tập='toàn bộ')
+t_held = pairwise_tests(preds, pairs, mask_fn=lambda q: np.isin(q, heldout)).assign(tập='khái niệm giữ lại')
+tests = pd.concat([t_all, t_held], ignore_index=True)
+tests.to_csv(OUT / 'kiem_dinh_delong.csv', index=False)
+tests[['tập', 'mô hình 1', 'mô hình 2', 'số dự đoán', 'auc_1', 'auc_2', 'delta', 'se', 'p_value']].round(5)"""),
+    md("## 6. Hình"),
+    code("""\
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(7, 4))
+for k, v in MAIN.items():
+    if v in results:
+        h = results[v]['history']
+        ax.plot([e['epoch'] for e in h], [e['val']['all']['auc'] for e in h], marker='o', label=k)
+ax.set_xlabel('epoch'); ax.set_ylabel('AUC kiểm định'); ax.set_title('Đường cong học (phần 0)')
+ax.grid(alpha=0.3); ax.legend()
+fig.tight_layout(); fig.savefig(OUT / 'hinh1_duong_cong_hoc.png', dpi=150)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+x = np.arange(len(b3))
+ax.bar(x - 0.2, b3['AUC kiểm tra'], 0.4, label='toàn tập kiểm tra')
+ax.bar(x + 0.2, b3['AUC khái niệm giữ lại'], 0.4, label='khái niệm giữ lại')
+ax.set_xticks(x, b3['mô hình'], rotation=15)
+lo = min(b3['AUC kiểm tra'].min(), b3['AUC khái niệm giữ lại'].min())
+ax.set_ylim(lo - 0.02, None); ax.set_ylabel('AUC'); ax.legend(); ax.grid(axis='y', alpha=0.3)
+ax.set_title('AUC trên toàn tập và trên khái niệm giữ lại')
+fig.tight_layout(); fig.savefig(OUT / 'hinh2_auc_giu_lai.png', dpi=150)
+plt.show()"""),
+    md("## 7. Tóm tắt cho báo cáo"),
+    code("""\
+import json
+
+summary = {
+    'bang1': table.round(5).to_dict(orient='records'),
+    'bang2': abl.round(5).to_dict(orient='records'),
+    'bang3': b3.round(5).to_dict(orient='records'),
+    'bang4': b4.round(5).reset_index().to_dict(orient='records'),
+    'so_du_doan_theo_nhom': counts,
+    'kiem_dinh': tests.round(6).to_dict(orient='records'),
+}
+(OUT / 'tom_tat.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2, default=float))
+!ls -la {OUT}"""),
+])
+
 
 if __name__ == "__main__":
     out = ROOT / "notebooks"
     out.mkdir(exist_ok=True)
-    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04)):
+    for name, nb in (("01_tai_du_lieu.ipynb", NB01), ("02_tien_xu_ly.ipynb", NB02), ("03_do_thi.ipynb", NB03), ("04_huan_luyen.ipynb", NB04), ("05_phan_tich.ipynb", NB05)):
         nbf.write(nb, out / name)
         print("đã ghi", out / name)

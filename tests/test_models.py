@@ -105,3 +105,16 @@ def test_run_end_to_end_and_resume(tmp_path, model, graph):
     cfg.max_epochs = 3
     res2 = run(cfg, log=lambda *_: None)
     assert res2["epochs"] == 3 and len(res2["history"]) == 3
+
+
+@pytest.mark.parametrize("name,kwargs", [("gkt", {"hidden": 8, "emb": 8}), ("dkt", {"emb": 8, "hidden": 8})])
+def test_trace_matches_forward(name, kwargs):
+    """trace(q, r)[t, q[t+1]] phải bằng sigmoid(forward(q, r))[t]."""
+    torch.manual_seed(0)
+    model = build_model(name, N, ADJ, dropout=0.0, **kwargs).eval()
+    q = torch.randint(0, N, (12,))
+    r = torch.randint(0, 2, (12,))
+    tr = model.trace(q, r)
+    assert tr.shape == (12, N)
+    fwd = torch.sigmoid(model(q.unsqueeze(0), r.unsqueeze(0)))[0]
+    assert torch.allclose(tr[torch.arange(11), q[1:]], fwd, atol=1e-5)

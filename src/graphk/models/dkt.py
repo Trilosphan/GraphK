@@ -20,3 +20,9 @@ class DKT(nn.Module):
         h, _ = self.lstm(self.inter_emb(q[:, :-1] * 2 + r[:, :-1]))
         y = self.out(self.dropout(h))                                   # (B, T-1, n_nodes)
         return torch.gather(y, 2, q[:, 1:].unsqueeze(-1)).squeeze(-1)
+
+    @torch.no_grad()
+    def trace(self, q: torch.Tensor, r: torch.Tensor) -> torch.Tensor:
+        """Một chuỗi q, r (T,): xác suất trả lời đúng mọi khái niệm sau từng bước, kích thước (T, n_nodes)."""
+        h, _ = self.lstm(self.inter_emb(q * 2 + r).unsqueeze(0))
+        return torch.sigmoid(self.out(h[0]))

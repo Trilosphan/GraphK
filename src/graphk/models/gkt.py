@@ -106,34 +106,46 @@ class GKT(nn.Module):
         self.gru = nn.GRUCell(hidden, hidden)
         self.out = nn.Linear(hidden, 1)
 
+    def _step(self, h: torch.Tensor, qt: torch.Tensor, rt: torch.Tensor, rows: torch.Tensor) -> torch.Tensor:
+        """Cập nhật trạng thái sau khi người học trả lời khái niệm qt với kết quả rt."""
+        x = self.resp_emb(qt * 2 + rt)
+        self_in = torch.cat([h[rows, qt], x], dim=-1)                          # (B, d+e)
+        m_self = self.f_self(self_in)
+
+        # Các cạnh của những nút đang được trả lời, trải phẳng: E_t = tổng bậc trong lô
+        deg = self.nbr_ptr[1:][qt] - self.nbr_ptr[qt]
+        e_rows = torch.repeat_interleave(rows, deg)                            # (E_t,)
+        first = torch.repeat_interleave(self.nbr_ptr[qt] - (torch.cumsum(deg, 0) - deg), deg)
+        pos = first + torch.arange(e_rows.numel(), device=qt.device)
+        nb, typ, w = self.nbr[pos], self.nbr_typ[pos], self.nbr_w[pos]
+        nb_in = torch.cat([self_in[e_rows], h[e_rows, nb], self.node_emb(nb)], dim=-1)
+        m_nb = torch.where((typ == FWD).unsqueeze(-1), self.f_fwd(nb_in), self.f_bwd(nb_in))
+        m_nb = m_nb * w.unsqueeze(-1)
+
+        upd_rows = torch.cat([rows, e_rows])
+        upd_nodes = torch.cat([qt, nb])
+        m_all = self.gate(torch.cat([m_self, m_nb]), upd_nodes)
+        h_new = self.gru(m_all, h[upd_rows, upd_nodes])
+        return h.index_put((upd_rows, upd_nodes), h_new)
+
     def forward(self, q: torch.Tensor, r: torch.Tensor) -> torch.Tensor:
         """q, r: (B, T). Trả về logit (B, T-1): dự đoán r[:, t+1] từ q[:, :t+2] và r[:, :t+1]."""
         bsz, seqlen = q.shape
         h = self.h0.unsqueeze(0).expand(bsz, -1, -1).contiguous()
         rows = torch.arange(bsz, device=q.device)
-        deg_all = self.nbr_ptr[1:] - self.nbr_ptr[:-1]
         logits = []
         for t in range(seqlen - 1):
-            qt, rt = q[:, t], r[:, t]
-            x = self.resp_emb(qt * 2 + rt)
-            self_in = torch.cat([h[rows, qt], x], dim=-1)                      # (B, d+e)
-            m_self = self.f_self(self_in)
-
-            # Các cạnh của những nút đang được trả lời, trải phẳng: E_t = tổng bậc trong lô
-            deg = deg_all[qt]
-            e_rows = torch.repeat_interleave(rows, deg)                        # (E_t,)
-            first = torch.repeat_interleave(self.nbr_ptr[qt] - (torch.cumsum(deg, 0) - deg), deg)
-            pos = first + torch.arange(e_rows.numel(), device=q.device)
-            nb, typ, w = self.nbr[pos], self.nbr_typ[pos], self.nbr_w[pos]
-            nb_in = torch.cat([self_in[e_rows], h[e_rows, nb], self.node_emb(nb)], dim=-1)
-            m_nb = torch.where((typ == FWD).unsqueeze(-1), self.f_fwd(nb_in), self.f_bwd(nb_in))
-            m_nb = m_nb * w.unsqueeze(-1)
-
-            upd_rows = torch.cat([rows, e_rows])
-            upd_nodes = torch.cat([qt, nb])
-            m_all = self.gate(torch.cat([m_self, m_nb]), upd_nodes)
-            h_new = self.gru(m_all, h[upd_rows, upd_nodes])
-            h = h.index_put((upd_rows, upd_nodes), h_new)
-
+            h = self._step(h, q[:, t], r[:, t], rows)
             logits.append(self.out(h[rows, q[:, t + 1]]).squeeze(-1))
         return torch.stack(logits, dim=1)
+
+    @torch.no_grad()
+    def trace(self, q: torch.Tensor, r: torch.Tensor) -> torch.Tensor:
+        """Một chuỗi q, r (T,): xác suất trả lời đúng mọi khái niệm sau từng bước, kích thước (T, n_nodes)."""
+        h = self.h0.unsqueeze(0).clone()
+        rows = torch.zeros(1, dtype=torch.long, device=q.device)
+        out = []
+        for t in range(len(q)):
+            h = self._step(h, q[t:t + 1], r[t:t + 1], rows)
+            out.append(torch.sigmoid(self.out(h[0, :self.n_nodes])).squeeze(-1))
+        return torch.stack(out)
