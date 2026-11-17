@@ -43,7 +43,7 @@
   ],
   "ghi_chu": {
     "bia": "Giới thiệu đề tài: Đồ án 8, GKT trên đồ thị tiên quyết tường minh của Junyi Academy.",
-    "van_de": "Nêu ba câu hỏi nghiên cứu. RQ4 về MOOCCubeX nằm ngoài phạm vi kết quả.",
+    "van_de": "Phát biểu bài toán theo mục 1.3 của dàn ý: đầu vào, đầu ra và ba câu hỏi nghiên cứu. RQ4 về MOOCCubeX nằm ngoài phạm vi kết quả.",
     "bai_toan": "Truy vết tri thức: từ lịch sử (khái niệm, kết quả) dự đoán xác suất trả lời đúng ở bước kế tiếp. Ba họ mô hình.",
     "du_lieu": "Các con số sau tiền xử lý notebook 02. Con số 835 khái niệm đến từ 837 dòng có 2 tên lặp.",
     "do_thi": "Đồ thị chuyên gia có một chu trình 3 bài về căn thức và 2 vòng tự thân; đây là điểm không nhất quán của dữ liệu chuyên gia.",
@@ -59,5 +59,23 @@
     "phan_bien": "Trả lời hai câu hỏi phản biện của đề bài bằng thiết kế đánh giá.",
     "han_che": "Các hạn chế chính và hướng mở rộng.",
     "ket_luan": "Tóm tắt ba ý chính; AKT và hai thí nghiệm cắt bỏ sẽ bổ sung."
-  }
+  },
+  "tai_lieu_slide": [
+    "Piech và cs., Deep knowledge tracing, NeurIPS 2015",
+    "Nakagawa và cs., Graph-based knowledge tracing, IEEE/WIC/ACM WI 2019",
+    "Ghosh và cs., Context-aware attentive KT (AKT), KDD 2020",
+    "Tong và cs., Structure-based KT (SKT), IEEE ICDM 2020",
+    "Yang và cs., GIKT, ECML-PKDD 2020",
+    "Song và cs., JKT, Information Sciences 2021",
+    "Song và cs., Bi-CLKT, Knowledge-Based Systems 2022",
+    "Liu và cs., pyKT, NeurIPS Datasets & Benchmarks 2022",
+    "Liu và cs., simpleKT, ICLR 2023",
+    "Ni và cs., HHSKT, Expert Systems with Applications 2023",
+    "Cui và cs., DGEKT, ACM TOIS 2024",
+    "Zhou và cs., PSI-KT, ICLR 2024",
+    "Abdelrahman và cs., Knowledge tracing: A survey, ACM CSUR 2023",
+    "Shen và cs., A survey of KT, IEEE TLT 2024",
+    "Chang, Hsu, Chen, Junyi Academy dataset, EDM 2015",
+    "Sun, Xu, Fast DeLong, IEEE Signal Processing Letters 2014"
+  ]
 }

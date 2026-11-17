@@ -53,10 +53,18 @@ pres.defineSlideMaster({
   slideNumber: { x: W - 1.0, y: H - 0.5, w: 0.5, h: 0.3, fontSize: 11, color: HEX.accent4 },
 });
 
-let sec = "";
-const addSlide = (master, section) => {
-  if (section && section !== sec) { pres.addSection({ title: section }); sec = section; }
-  return pres.addSlide({ masterName: master, sectionTitle: sec });
+// Mỗi slide là một hàm SL.<tên>; thứ tự và phân mục theo dàn ý nằm ở DAN_Y cuối tệp.
+// CUR_SEC: mục của dàn ý đang dựng (một section PowerPoint); CRUMB: nhãn mục con ghi nhỏ phía trên tiêu đề.
+const SL = {};
+let CUR_SEC = "", sec = "", CRUMB = null;
+const addSlide = (master) => {
+  if (CUR_SEC !== sec) { pres.addSection({ title: CUR_SEC }); sec = CUR_SEC; }
+  const s = pres.addSlide({ masterName: master, sectionTitle: sec });
+  if (master === "NOI_DUNG" && CRUMB) {
+    s.addText(CRUMB, { isTextBox: true, x: M, y: 0.12, w: W - 2 * M, h: 0.3, margin: 0, fontFace: THEME.bodyFontFace,
+      fontSize: 12, bold: true, color: HEX.accent3, objectName: "nhan_muc" });
+  }
+  return s;
 };
 const text = (s, t, o) => s.addText(t, { isTextBox: true, fontFace: THEME.bodyFontFace, color: HEX.dk1, fontSize: 16, valign: "top", margin: 0, ...o });
 const bullets = (items, o = {}) => items.map((t, i) => ({ text: t, options: { bullet: true, breakLine: i < items.length - 1, paraSpaceAfter: 6, ...o } }));
@@ -96,19 +104,22 @@ const MAIN = ["GKT-Expert", "GKT-Stat", "GKT-Random", "DKT", "AKT"].filter((k) =
 const D = K.du_lieu, G = D.do_thi_chuyen_gia;
 const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
 
-// 1 ---------------------------------------------------------------- bìa
-{
+SL.bia = () => {
+  CRUMB = null;
   const s = addSlide("TIEU_DE_TOI", "Mở đầu");
   s.addText("Truy vết tri thức dựa trên đồ thị với đồ thị tiên quyết tường minh", { placeholder: "title" });
   s.addText([{ text: "Đồ án 8 — Học máy · GKT trên dữ liệu Junyi Academy", options: { breakLine: true } },
-    { text: `${info.tac_gia} · ${info.lop} · GV: ${info.giang_vien}` }], { placeholder: "body" });
+    { text: `Học viên: ${info.tac_gia} · ${info.lop} · Giảng viên: ${info.giang_vien}` }], { placeholder: "body" });
   s.addNotes(T.ghi_chu.bia);
-}
-// 2 ---------------------------------------------------------------- vấn đề và câu hỏi nghiên cứu
-{
+};
+SL.cau_hoi = () => {
+  CRUMB = "1.3 Phát biểu bài toán";
   const s = addSlide("NOI_DUNG", "Mở đầu");
-  s.addText("Đồ thị tiên quyết chuyên gia có giúp dự đoán?", { placeholder: "title" });
-  text(s, T.van_de, { x: M, y: 1.45, w: W - 2 * M, h: 0.9, fontSize: 18, color: HEX.dk2 });
+  s.addText("Phát biểu bài toán và câu hỏi nghiên cứu", { placeholder: "title" });
+  text(s, [{ text: "Đầu vào: ", options: { bold: true } },
+    { text: `nhật ký (khái niệm, kết quả) của từng người học và đồ thị tiên quyết có hướng G = (V, E), |V| = ${D.n_nut}, |E| = ${G.n_edges}. ` },
+    { text: "Đầu ra:", options: { bold: true } }], { x: M, y: 1.4, w: 8.4, h: 0.95, fontSize: 17, color: HEX.dk2 });
+  formula(s, "kt", M + 8.6, 1.83, 18, W - 2 * M - 8.6);
   const rq = [["RQ1", "GKT-Expert có vượt DKT, AKT (không dùng đồ thị)?", HEX.accent1],
     ["RQ2", "Tri thức chuyên gia đóng góp bao nhiêu so với tri thức thống kê, cùng kiến trúc, cùng 979 cạnh?", HEX.accent2],
     ["RQ3", "Nếu đồ thị thống kê thắng: giá trị thật hay rò rỉ gián tiếp? Đánh giá thế nào cho công bằng?", HEX.accent3]];
@@ -118,9 +129,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     text(s, v, { x: M + 1.3, y: y + 0.12, w: W - 2 * M - 1.3, h: 0.9, fontSize: 18, valign: "middle" });
   });
   s.addNotes(T.ghi_chu.van_de);
-}
-// 3 ---------------------------------------------------------------- bài toán truy vết tri thức
-{
+};
+SL.truy_vet = () => {
+  CRUMB = "1.2 Truy vết tri thức";
   const s = addSlide("NOI_DUNG", "Mở đầu");
   s.addText("Truy vết tri thức: dự đoán câu trả lời kế tiếp", { placeholder: "title" });
   const seq = [["Phân số", 1], ["Phân số", 0], ["Cộng phân số", 1], ["Rút gọn", 1], ["Nhân phân số", "?"]];
@@ -143,9 +154,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
       { text: d, options: { fontSize: 14 } }], { x: x + 0.25, y: 4.45, w: 3.3, h: 1.9 });
   });
   s.addNotes(T.ghi_chu.bai_toan);
-}
-// 4 ---------------------------------------------------------------- dữ liệu
-{
+};
+SL.du_lieu = () => {
+  CRUMB = "4.1 Dữ liệu";
   const s = addSlide("NOI_DUNG", "Dữ liệu và đồ thị");
   s.addText("Dữ liệu Junyi Academy sau tiền xử lý", { placeholder: "title" });
   const st = [[String(D.n_nut), "khái niệm (837 dòng, 2 tên lặp)", HEX.accent1], [n0(D.n_nguoi_hoc), "người học (≥ 3 tương tác)", HEX.accent2],
@@ -157,9 +168,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     "Báo cáo dùng phần 0: huấn luyện 122.799 người học, kiểm định 30.700, kiểm tra 38.375",
   ]), { x: M, y: 3.9, w: W - 2 * M, h: 2.6, fontSize: 18 });
   s.addNotes(T.ghi_chu.du_lieu);
-}
-// 5 ---------------------------------------------------------------- đồ thị chuyên gia
-{
+};
+SL.tien_xu_ly = () => {
+  CRUMB = "3.1 Tiền xử lý dữ liệu";
   const s = addSlide("NOI_DUNG", "Dữ liệu và đồ thị");
   s.addText("Đồ thị tiên quyết chuyên gia không hoàn hảo", { placeholder: "title" });
   const st = [[String(G.n_edges), "cạnh tiên quyết", HEX.accent2], [String(G.n_isolated), "nút cô lập", HEX.accent1],
@@ -174,9 +185,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     { text: "2 vòng tự thân: proportions_1, number_sense_length_l1", options: { bullet: true, fontSize: 15, breakLine: true } },
     { text: "3 cạnh trùng; 2 bài lặp tên (giữ bản mới nhất)", options: { bullet: true, fontSize: 15 } }], { x: M + 6.7, y: 3.85, w: W - 2 * M - 7.0, h: 2.5 });
   s.addNotes(T.ghi_chu.do_thi);
-}
-// 6 ---------------------------------------------------------------- nghiên cứu liên quan
-{
+};
+SL.ba_nhom = () => {
+  CRUMB = "2.1–2.3 Ba nhóm phương pháp";
   const s = addSlide("NOI_DUNG", "Nghiên cứu liên quan");
   s.addText("Ba nhóm phương pháp và khoảng trống", { placeholder: "title" });
   const g3 = [["Không dùng đồ thị", "AKT (KDD'20), simpleKT (ICLR'23), pyKT", "quan hệ khái niệm chỉ học ngầm", "kênh lan truyền tường minh theo cạnh tiên quyết", HEX.accent3],
@@ -192,9 +203,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     text(s, [{ text: "Cầu nối sang GKT-Expert", options: { bold: true, breakLine: true, color: HEX.accent2 } }, { text: br }], { x: x + 0.25, y: y + 3.45, w: 3.3, h: 1.5, fontSize: 14 });
   });
   s.addNotes(T.ghi_chu.lien_quan);
-}
-// 7 ---------------------------------------------------------------- kiến trúc
-{
+};
+SL.kien_truc = () => {
+  CRUMB = "3.3 Mô hình GKT tùy biến";
   const s = addSlide("NOI_DUNG", "Phương pháp");
   s.addText("GKT lan truyền hai chiều trên đồ thị có hướng", { placeholder: "title" });
   image(s, fig("hinh1_kien_truc.png"), M, 1.35, 8.6, 4.15, "Sơ đồ kiến trúc GKT lan truyền hai chiều");
@@ -203,9 +214,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     "Nút cô lập: tự cập nhật (mặc định) hoặc nút gốc ảo"]), { x: M + 8.9, y: 1.5, w: W - 2 * M - 8.9, h: 4.2, fontSize: 15 });
   text(s, "129.701 tham số · ẩn 32 · Adam 10⁻³ · cỡ lô 128 · dừng sớm theo AUC kiểm định", { x: M, y: 5.85, w: W - 2 * M, h: 0.5, fontSize: 14, color: HEX.dk2 });
   s.addNotes(T.ghi_chu.kien_truc);
-}
-// 8 ---------------------------------------------------------------- ba đồ thị và giao thức chống rò rỉ
-{
+};
+SL.ba_do_thi = () => {
+  CRUMB = "3.4 Các thiết lập đồ thị";
   const s = addSlide("NOI_DUNG", "Phương pháp");
   s.addText("Ba đồ thị cùng 979 cạnh và giao thức chống rò rỉ", { placeholder: "title" });
   const cols = [["Chuyên gia", "cạnh tiên quyết Junyi", graphRow("expert"), HEX.accent1],
@@ -229,17 +240,17 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     { text: "108 khái niệm giữ lại: không cạnh thống kê nào chạm vào", options: { bullet: true } }], { x: M + 9.15, y: 1.65, w: W - 2 * M - 9.35, h: 2.8, fontSize: 13 });
   text(s, T.do_thi_tach_roi, { x: M, y: 4.8, w: W - 2 * M, h: 1.6, fontSize: 16 });
   s.addNotes(T.ghi_chu.ba_do_thi);
-}
-// 9 ---------------------------------------------------------------- hình 2
-{
+};
+SL.hinh2 = () => {
+  CRUMB = "3.4 Các thiết lập đồ thị";
   const s = addSlide("NOI_DUNG", "Phương pháp");
   s.addText("Hành vi không phân biệt được chiều tiên quyết", { placeholder: "title" });
   image(s, fig("hinh2_do_thi.png"), M, 1.35, W - 2 * M, 4.6, "Phân phối bậc và giá trị gia tăng của các đồ thị");
   text(s, T.hinh2, { x: M, y: 6.1, w: W - 2 * M - 0.8, h: 0.8, fontSize: 14, color: HEX.dk2 });
   s.addNotes(T.ghi_chu.hinh2);
-}
-// 10 --------------------------------------------------------------- kết quả chính
-{
+};
+SL.ket_qua = () => {
+  CRUMB = "4.3 Kết quả: RQ1, RQ2";
   const s = addSlide("NOI_DUNG", "Kết quả");
   s.addText(T.tieu_de_ket_qua, { placeholder: "title" });
   s.addChart(pres.charts.BAR, [{ name: "AUC kiểm tra", labels: MAIN, values: MAIN.map((k) => byLabel[k]["AUC kiểm tra"]) }], {
@@ -253,9 +264,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" } });
   text(s, T.ket_qua_chinh, { x: M + 7.9, y: 4.3, w: W - 2 * M - 7.9, h: 2.3, fontSize: 14 });
   s.addNotes(T.ghi_chu.ket_qua);
-}
-// 11 --------------------------------------------------------------- RQ3 khái niệm giữ lại
-{
+};
+SL.giu_lai = () => {
+  CRUMB = "4.3 Kết quả: RQ3";
   const s = addSlide("NOI_DUNG", "Kết quả");
   s.addText(T.tieu_de_rq3, { placeholder: "title" });
   const b3 = Object.fromEntries((K.bang3 || []).map((r) => [r["mô hình"], r]));
@@ -270,9 +281,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
   card(s, M + 8.5, 1.5, W - 2 * M - 8.5, 5.0, HEX.lt2, "nhan_xet_rq3");
   text(s, T.rq3, { x: M + 8.75, y: 1.7, w: W - 2 * M - 9.0, h: 4.6, fontSize: 14 });
   s.addNotes(T.ghi_chu.rq3);
-}
-// 12 --------------------------------------------------------------- cắt bỏ
-{
+};
+SL.cat_bo = () => {
+  CRUMB = "4.3 Kết quả: nghiên cứu cắt bỏ";
   const s = addSlide("NOI_DUNG", "Kết quả");
   s.addText("Nghiên cứu cắt bỏ trên GKT-Expert", { placeholder: "title" });
   const ab = K.bang2 || [];
@@ -282,7 +293,7 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" } });
   text(s, T.cat_bo, { x: M, y: 4.2, w: W - 2 * M, h: 2.3, fontSize: 16 });
   s.addNotes(T.ghi_chu.cat_bo);
-}
+};
 // 13 --------------------------------------------------------------- case study 1
 const CS = K.case_study || {};
 const csName = (id) => (CS.focus_names || [])[(CS.focus || []).indexOf(id)] || String(id);
@@ -304,8 +315,9 @@ function chooseStep() {
   return best;
 }
 const STEP = chooseStep();
-// 13a -------------------------------------------------------------- lý thuyết: bài toán qua chuỗi của người học
-if (CS.q) {
+SL.case_chuoi = () => {
+  if (!CS.q) return;
+  CRUMB = "4.3 Case study";
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText("Case study: chuỗi tiên quyết giải tích", { placeholder: "title" });
   // sơ đồ: xếp khái niệm theo tầng (độ sâu trong chuỗi), cạnh có mũi tên = quan hệ tiên quyết chuyên gia
@@ -351,9 +363,10 @@ if (CS.q) {
   ], { x: RX, y: 3.3, w: RW, h: 3.2, fontSize: 14 });
   s.addNotes("Giới thiệu case study như một ví dụ cụ thể của bài toán: chuỗi (khái niệm, kết quả) của một người học thật trong tập kiểm tra, "
     + "và các cạnh tiên quyết chuyên gia giữa những khái niệm người học đã gặp. Khối màu cam là khái niệm được trả lời ở bước minh họa, khối màu xanh là khái niệm phụ thuộc chưa được làm.");
-}
-// 13b -------------------------------------------------------------- lý thuyết: một bước lan truyền
-if (STEP) {
+};
+SL.case_buoc = () => {
+  if (!STEP) return;
+  CRUMB = "4.3 Case study";
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText(`Lý thuyết qua một bước: làm đúng ${csName(STEP.a)}`, { placeholder: "title" });
   card(s, M, 1.45, 6.1, 5.2, HEX.lt2, "cong_thuc");
@@ -405,8 +418,9 @@ if (STEP) {
   ], { x: M + 6.4, y: 1.55 + 0.4 * (nb.length + 2) + 0.3, w: W - 2 * M - 6.4, h: 2.6, fontSize: 13 });
   s.addNotes("Giải thích lý thuyết qua một bước cụ thể. Bên trái là công thức một bước cập nhật của GKT hai chiều và của DKT. "
     + "Bên phải là số liệu thật lấy từ trace của mô hình: mức thành thạo dự đoán của khái niệm vừa trả lời và các khái niệm kề nó, ngay trước và ngay sau bước đó.");
-}
-{
+};
+SL.case_hinh = () => {
+  CRUMB = "4.3 Case study";
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText("Case study: một người học trong tập kiểm tra", { placeholder: "title" });
   image(s, fig("hinh5_case_study.png"), M, 1.3, 8.9, 5.4, "Bản đồ nhiệt mức thành thạo dự đoán theo bước");
@@ -416,18 +430,18 @@ if (STEP) {
       options: { bullet: true, fontSize: 13, breakLine: i < arr.length - 1 } }))], { x: M + 9.2, y: 1.4, w: W - 2 * M - 9.2, h: 3.0 });
   text(s, "Hàng: khái niệm; cột: bước. Màu: P(đúng) dự đoán; o đúng, x sai.", { x: M + 9.2, y: 4.6, w: W - 2 * M - 9.2, h: 1.0, fontSize: 12, color: HEX.dk2 });
   s.addNotes(T.ghi_chu.case1);
-}
-// 14 --------------------------------------------------------------- case study 2
-{
+};
+SL.case_tom = () => {
+  CRUMB = "4.3 Case study";
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText("Điều mô hình đồ thị nhìn thấy mà DKT không có", { placeholder: "title" });
   const acc = CS.accuracy_next || {};
   Object.entries(acc).forEach(([k, v], i) => stat(s, M + i * 4.1, 1.5, 3.8, pct(v, 0), `${k}: dự đoán đúng bước kế tiếp`, [HEX.accent1, HEX.accent2, HEX.accent3][i]));
   text(s, bullets(T.case_study), { x: M, y: 3.5, w: W - 2 * M, h: 3.0, fontSize: 17 });
   s.addNotes(T.ghi_chu.case2);
-}
-// 15 --------------------------------------------------------------- câu hỏi phản biện
-{
+};
+SL.phan_bien = () => {
+  CRUMB = "4.4 Đối sánh và thảo luận";
   const s = addSlide("NOI_DUNG", "Thảo luận");
   s.addText("Trả lời hai câu hỏi phản biện", { placeholder: "title" });
   [[T.phan_bien[0][0], T.phan_bien[0][1], HEX.accent1], [T.phan_bien[1][0], T.phan_bien[1][1], HEX.accent2]].forEach(([q, a, c], i) => {
@@ -437,9 +451,9 @@ if (STEP) {
     text(s, a, { x: x + 0.3, y: 3.05, w: 5.3, h: 3.3, fontSize: 15 });
   });
   s.addNotes(T.ghi_chu.phan_bien);
-}
-// 16 --------------------------------------------------------------- hạn chế
-{
+};
+SL.han_che = () => {
+  CRUMB = "5. Kết luận và hướng phát triển";
   const s = addSlide("NOI_DUNG", "Thảo luận");
   s.addText("Hạn chế và hướng phát triển", { placeholder: "title" });
   card(s, M, 1.5, 5.9, 5.0, HEX.lt2, "han_che");
@@ -447,14 +461,254 @@ if (STEP) {
   card(s, M + 6.15, 1.5, 5.9, 5.0, HEX.lt2, "huong_phat_trien");
   text(s, [{ text: "Hướng phát triển", options: { bold: true, fontSize: 18, breakLine: true, color: HEX.accent2 } }, ...bullets(T.huong_phat_trien, { fontSize: 15 })], { x: M + 6.45, y: 1.7, w: 5.3, h: 4.6 });
   s.addNotes(T.ghi_chu.han_che);
-}
-// 17 --------------------------------------------------------------- kết luận
-{
+};
+SL.ket_luan = () => {
+  CRUMB = null;
   const s = addSlide("TIEU_DE_TOI", "Kết luận");
   s.addText("Kết luận", { placeholder: "title" });
   s.addText(T.ket_luan.map((t, i) => ({ text: t, options: { bullet: true, breakLine: i < T.ket_luan.length - 1, paraSpaceAfter: 8 } })), { placeholder: "body" });
   s.addNotes(T.ghi_chu.ket_luan);
-}
+};
+
+// ------------------------------------------------------------------ slide mới theo dàn ý
+const kd = (a, b, tap = "toàn bộ") => (K.kiem_dinh || []).find((r) => r["mô hình 1"] === a && r["mô hình 2"] === b && r["tập"] === tap);
+const sign = (x, d = 4) => (x == null ? "—" : (x >= 0 ? "+" : "−") + f(Math.abs(x), d));
+const tableOpt = (o) => ({ fontFace: THEME.bodyFontFace, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "C9CFDB" }, ...o });
+const head = (cols) => cols.map((h) => ({ text: h, options: { bold: true, fill: { color: HEX.lt2 } } }));
+
+SL.tom_tat = () => {
+  CRUMB = "Tóm tắt";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Tóm tắt", { placeholder: "title" });
+  const cols = [
+    ["Bài toán", HEX.accent3, "Đồ thị tiên quyết do chuyên gia Junyi xác nhận có giúp truy vết tri thức không, và có hơn đồ thị suy từ dữ liệu không?"],
+    ["Phương pháp", HEX.accent2, "GKT lan truyền hai chiều; cùng kiến trúc trên ba đồ thị 979 cạnh (chuyên gia, thống kê, ngẫu nhiên); giao thức chống rò rỉ với 108 khái niệm giữ lại."],
+    ["Thực nghiệm", HEX.accent1, `${n0(D.n_nguoi_hoc)} người học, ${(D.n_tuong_tac / 1e6).toFixed(2).replace(".", ",")} triệu tương tác; tập kiểm tra 38.375 người học; AUC, ACC, RMSE, kiểm định DeLong.`]];
+  cols.forEach(([h, c, t], i) => {
+    const x = M + i * 4.1;
+    card(s, x, 1.45, 3.8, 2.55, HEX.lt2, `tom_tat_${i}`);
+    text(s, h, { x: x + 0.25, y: 1.6, w: 3.3, h: 0.45, bold: true, fontSize: 18, color: c });
+    text(s, t, { x: x + 0.25, y: 2.1, w: 3.3, h: 1.8, fontSize: 14 });
+  });
+  const e = kd("GKT-Expert", "GKT-Stat"), r = kd("GKT-Stat", "GKT-Random"), d = kd("GKT-Expert", "DKT");
+  const st = [[sign(e && e.delta), "AUC: Expert − Stat (cùng kiến trúc, cùng số cạnh)", HEX.accent1],
+    [sign(r && r.delta), "AUC: Stat − Random (đồ thị thống kê ≈ ngẫu nhiên)", HEX.accent2],
+    [sign(d && d.delta), "AUC: Expert − DKT (DKT vẫn cao nhất)", HEX.accent3]];
+  st.forEach(([v, l, c], i) => stat(s, M + i * 4.1, 4.3, 3.8, v, l, c));
+  s.addNotes("Tóm tắt toàn bộ đề tài trong một slide: câu hỏi, cách làm, dữ liệu và ba con số chính trên tập kiểm tra (phần 0).");
+};
+
+const MUC = [
+  ["1", "Giới thiệu", "AIED · truy vết tri thức · phát biểu bài toán · đóng góp"],
+  ["2", "Nghiên cứu liên quan", "ba nhóm phương pháp · tổng hợp và khoảng trống"],
+  ["3", "Phương pháp", "tiền xử lý · nút cô lập · GKT tùy biến · thiết lập đồ thị · quy trình Colab"],
+  ["4", "Thực nghiệm", "dữ liệu · độ đo · kết quả · case study · đối sánh"],
+  ["5", "Kết luận và hướng phát triển", ""],
+  ["P", "Phụ lục", "siêu tham số · tài liệu tham khảo"]];
+SL.muc_luc = () => {
+  CRUMB = null;
+  const s = addSlide("NOI_DUNG");
+  s.addText("Nội dung trình bày", { placeholder: "title" });
+  MUC.forEach(([k, t, d], i) => {
+    const y = 1.45 + i * 0.88;
+    circle(s, M, y, 0.65, [HEX.accent3, HEX.accent2, HEX.accent1, HEX.accent5, HEX.dk2, HEX.accent4][i], k, `muc_${i}`);
+    text(s, [{ text: t, options: { bold: true, fontSize: 20, breakLine: !!d } }, ...(d ? [{ text: d, options: { fontSize: 14, color: HEX.dk2 } }] : [])],
+      { x: M + 0.95, y: y - 0.04, w: W - 2 * M - 0.95, h: 0.8, valign: "middle" });
+  });
+};
+
+const CHUONG = {
+  "1. Giới thiệu": "1.1 AIED · 1.2 Truy vết tri thức · 1.3 Phát biểu bài toán · 1.4 Mục tiêu và đóng góp",
+  "2. Nghiên cứu liên quan": "2.1 Không dùng đồ thị · 2.2 Đồ thị suy từ dữ liệu · 2.3 Có quan hệ tiên quyết · 2.4 Tổng hợp",
+  "3. Phương pháp": "3.1 Tiền xử lý · 3.2 Nút cô lập · 3.3 GKT tùy biến · 3.4 Thiết lập đồ thị · 3.5 Quy trình Colab",
+  "4. Thực nghiệm": "4.1 Dữ liệu · 4.2 Độ đo · 4.3 Kết quả và case study · 4.4 Đối sánh, thảo luận",
+  "5. Kết luận": "Hạn chế · hướng phát triển · kết luận",
+  "Phụ lục": "A. Siêu tham số · Tài liệu tham khảo",
+};
+SL.chuong = () => {
+  const s = addSlide("CHUONG");
+  s.addText(CUR_SEC, { placeholder: "title" });
+  s.addText(CHUONG[CUR_SEC] || "", { placeholder: "body" });
+};
+
+SL.aied = () => {
+  CRUMB = "1.1 Trí tuệ nhân tạo trong giáo dục (AIED)";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Mô hình người học là lõi của hệ thống học tập thích ứng", { placeholder: "title" });
+  const c3 = [["Gia sư thông minh (ITS)", "hướng dẫn từng bước, phản hồi theo câu trả lời của người học", HEX.accent3],
+    ["Học tập thích ứng", "chọn bài tập kế tiếp và lộ trình học theo năng lực hiện tại", HEX.accent2],
+    ["Mô hình người học", "ước lượng mức thành thạo từng khái niệm; truy vết tri thức là bài toán lõi", HEX.accent1]];
+  c3.forEach(([h, d, c], i) => {
+    const x = M + i * 4.1;
+    card(s, x, 1.5, 3.8, 2.4, HEX.lt2, `aied_${i}`);
+    circle(s, x + 0.25, 1.7, 0.6, c, String(i + 1), `aied_so_${i}`);
+    text(s, h, { x: x + 1.0, y: 1.7, w: 2.6, h: 0.6, bold: true, fontSize: 17, valign: "middle" });
+    text(s, d, { x: x + 0.25, y: 2.5, w: 3.3, h: 1.3, fontSize: 15 });
+  });
+  card(s, M, 4.2, W - 2 * M, 2.3, "FBE7DA", "aied_junyi");
+  text(s, [{ text: "Bối cảnh của đồ án", options: { bold: true, fontSize: 18, breakLine: true } },
+    ...bullets(["Junyi Academy có bản đồ quan hệ tiên quyết giữa 835 bài tập, đã được đội ngũ sư phạm xác nhận (ví dụ: Đạo hàm trước Tích phân)",
+      "DKT, DKVMN (đồ án 3–6) không khai thác cấu trúc này: quan hệ giữa khái niệm chỉ nằm ngầm trong trạng thái ẩn"], { fontSize: 15 })],
+    { x: M + 0.3, y: 4.4, w: W - 2 * M - 0.6, h: 2.0 });
+  s.addNotes("Đặt bài toán vào bối cảnh AIED: hệ thống gia sư thông minh và học tập thích ứng cần một mô hình người học tốt.");
+};
+
+SL.dong_gop = () => {
+  CRUMB = "1.4 Mục tiêu và đóng góp";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Đóng góp của đồ án", { placeholder: "title" });
+  const items = [
+    ["GKT lan truyền hai chiều", "hàm thông điệp riêng cho chiều xuôi và chiều ngược; danh sách cạnh nén, chi phí theo bậc thực tế"],
+    ["Đánh giá tách bạch", "cùng kiến trúc, cùng 979 cạnh: đồ thị chuyên gia, thống kê, ngẫu nhiên; DKT, AKT làm cơ sở"],
+    ["Giao thức chống rò rỉ", "đồ thị thống kê chỉ từ tập huấn luyện; 108 khái niệm giữ lại không có cạnh thống kê"],
+    ["Phân tích dữ liệu", "đồ thị chuyên gia có chu trình và vòng tự thân; hành vi không phân biệt được chiều tiên quyết"],
+    ["Quy trình tái lập", "6 notebook Colab, điểm kiểm tra trên Drive, kiểm thử đơn vị chống rò rỉ theo thời gian"]];
+  items.forEach(([h, d], i) => {
+    const y = 1.45 + i * 1.02;
+    circle(s, M, y, 0.7, [HEX.accent1, HEX.accent2, HEX.accent3, HEX.accent5, HEX.dk2][i], String(i + 1), `dong_gop_${i}`);
+    text(s, [{ text: h, options: { bold: true, fontSize: 18, breakLine: true } }, { text: d, options: { fontSize: 15, color: HEX.dk2 } }],
+      { x: M + 1.0, y: y - 0.05, w: W - 2 * M - 1.0, h: 0.9, valign: "middle" });
+  });
+  s.addNotes("Năm đóng góp, mỗi đóng góp gắn với một phần thực nghiệm phía sau.");
+};
+
+const NC = [
+  ["1", "AKT", "2020", "KDD (A*)", "không dùng", "—"], ["1", "simpleKT", "2023", "ICLR (A*)", "không dùng", "—"],
+  ["2", "JKT", "2021", "Inf. Sci. (Q1)", "bài tập–bài tập, khái niệm–khái niệm", "không"],
+  ["2", "Bi-CLKT", "2022", "KBS (Q1)", "bài tập–bài tập, học tương phản", "không"],
+  ["2", "DGEKT", "2024", "ACM TOIS (Q1)", "siêu đồ thị + chuyển tiếp", "không"],
+  ["2", "HHSKT", "2023", "ESWA (Q1)", "không thuần nhất", "không"],
+  ["2", "GIKT", "2020", "ECML-PKDD (A)", "câu hỏi–kỹ năng", "không"],
+  ["3", "SKT", "2020", "ICDM (A*)", "tiên quyết + tương tự", "một phần"],
+  ["3", "PSI-KT", "2024", "ICLR (A*)", "tiên quyết suy từ dữ liệu", "không"]];
+SL.tong_hop_nc = () => {
+  CRUMB = "2.4 Tổng hợp";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Tổng hợp và khoảng trống nghiên cứu", { placeholder: "title" });
+  const rows = [head(["Nhóm", "Công trình", "Năm", "Nơi công bố", "Loại đồ thị", "Đồ thị chuyên gia"]),
+    ...NC.map((r) => r.map((c) => ({ text: c }))),
+    ["—", "GKT-Expert (đồ án)", "2026", "—", "tiên quyết chuyên gia, hai chiều", "có"].map((c) => ({ text: c, options: { bold: true, color: HEX.accent1 } }))];
+  s.addTable(rows, tableOpt({ x: M, y: 1.4, w: 8.6, colW: [0.7, 1.7, 0.7, 1.6, 2.6, 1.3], fontSize: 12 }));
+  card(s, M + 8.9, 1.4, W - 2 * M - 8.9, 5.1, "FBE7DA", "khoang_trong");
+  text(s, [{ text: "Khoảng trống", options: { bold: true, fontSize: 18, breakLine: true } },
+    { text: "Chưa có đánh giá tách bạch đồ thị chuyên gia với đồ thị thống kê trong cùng một kiến trúc GKT, cùng số cạnh, kèm giao thức chống rò rỉ trên khái niệm giữ lại.", options: { fontSize: 15 } }],
+    { x: M + 9.15, y: 1.6, w: W - 2 * M - 9.4, h: 4.7 });
+  s.addNotes("Bảng tổng hợp mục 2.4 của dàn ý: các công trình từ 2020, nơi công bố và loại đồ thị. Không công trình nào dùng đồ thị tiên quyết chuyên gia một cách tách bạch.");
+};
+
+SL.nut_co_lap = () => {
+  CRUMB = "3.2 Xử lý nút cô lập";
+  const s = addSlide("NOI_DUNG");
+  s.addText(`${G.n_isolated} nút cô lập: hai cách xử lý`, { placeholder: "title" });
+  const c2 = [["(a) Tự cập nhật — mặc định", HEX.accent2, ["nút cô lập chỉ nhận thông điệp tự thân f_self", "tương đương thêm vòng tự thân, như DKT trên từng nút", "không thêm tham số"]],
+    ["(b) Nút gốc ảo", HEX.accent3, ["thêm một nút nối tới mọi khái niệm có bậc vào bằng 0", "biểu diễn năng lực chung của người học", "so sánh bằng nghiên cứu cắt bỏ (mục 4.3)"]]];
+  c2.forEach(([h, c, b], i) => {
+    const x = M + i * 6.15;
+    card(s, x, 1.5, 5.9, 3.4, HEX.lt2, `co_lap_${i}`);
+    text(s, h, { x: x + 0.3, y: 1.7, w: 5.3, h: 0.5, bold: true, fontSize: 19, color: c });
+    text(s, bullets(b, { fontSize: 16 }), { x: x + 0.3, y: 2.35, w: 5.3, h: 2.4 });
+  });
+  card(s, M, 5.15, W - 2 * M, 1.35, "FBE7DA", "chuan_hoa");
+  text(s, [{ text: "Chuẩn hóa an toàn: ", options: { bold: true } },
+    { text: "trọng số lân cận bằng nghịch đảo số lân cận cùng chiều; nút bậc 0 không có lân cận nên không sinh phép chia cho 0 (không NaN)." }],
+    { x: M + 0.3, y: 5.3, w: W - 2 * M - 0.6, h: 1.1, fontSize: 16, valign: "middle" });
+  s.addNotes("Đề bài yêu cầu tự quyết định cách xử lý nút cô lập. Đồ án chọn tự cập nhật làm mặc định và kiểm chứng phương án nút gốc ảo bằng nghiên cứu cắt bỏ.");
+};
+
+SL.quy_trinh = () => {
+  CRUMB = "3.5 Quy trình thực nghiệm trên Google Colab";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Quy trình tái lập trên Google Colab (GPU T4)", { placeholder: "title" });
+  const nb = [["01", "Tải dữ liệu", "Junyi, kiểm tra SHA256"], ["02", "Tiền xử lý", "chuỗi, node_id, đồ thị"], ["03", "Đồ thị", "thống kê, ngẫu nhiên, giữ lại"],
+    ["04", "Huấn luyện", "GKT ×3, DKT, AKT, cắt bỏ"], ["05", "Phân tích", "bảng, DeLong, case study"], ["06", "Xuất báo cáo", "PDF IEEE, Word, slide"]];
+  nb.forEach(([k, h, d], i) => {
+    const x = M + i * 2.04;
+    s.addShape(pres.shapes.CHEVRON, { x, y: 1.6, w: 1.95, h: 1.0, fill: { color: [HEX.accent3, HEX.accent3, HEX.accent2, HEX.accent1, HEX.accent2, HEX.dk2][i] },
+      line: { color: HEX.lt1 }, objectName: `notebook_${k}` });
+    text(s, k, { x: x + 0.35, y: 1.6, w: 1.3, h: 1.0, align: "center", valign: "middle", bold: true, fontSize: 20, color: HEX.lt1 });
+    text(s, [{ text: h, options: { bold: true, breakLine: true } }, { text: d, options: { fontSize: 12, color: HEX.dk2 } }],
+      { x, y: 2.75, w: 1.95, h: 0.9, fontSize: 14, align: "center" });
+  });
+  text(s, bullets(["Mã dùng chung trong src/graphk/; notebook chỉ gọi hàm, sinh từ scripts/tao_notebook.py",
+    "Điểm kiểm tra lưu lên Google Drive sau mỗi epoch; phiên bị ngắt thì chạy lại ô để học tiếp",
+    "Adam 10⁻³, cắt chuẩn gradient 1,0, tối đa 10 epoch, dừng sớm sau 3 epoch không cải thiện AUC kiểm định",
+    "41 ca kiểm thử đơn vị, gồm kiểm thử dự đoán ở bước t không phụ thuộc kết quả từ bước t+1"], { fontSize: 16 }),
+    { x: M, y: 4.0, w: W - 2 * M, h: 2.6 });
+  s.addNotes("Mục 3.5 của dàn ý: sáu notebook chạy tuần tự trên Colab, kết quả lưu trên Drive. Mã nguồn tại github.com/Trilosphan/GraphK.");
+};
+
+SL.do_do = () => {
+  CRUMB = "4.2 Độ đo đánh giá";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Độ đo và kiểm định", { placeholder: "title" });
+  const c3 = [["Độ đo chính", HEX.accent1, ["AUC-ROC của dự đoán bước kế tiếp", "trên 38.375 người học chưa thấy khi huấn luyện"]],
+    ["Độ đo phụ", HEX.accent2, ["ACC (ngưỡng 0,5)", "RMSE"]],
+    ["Phân tích tách bạch", HEX.accent3, ["AUC trên 108 khái niệm giữ lại và khái niệm còn lại", "AUC theo nhóm: cô lập, bậc thấp, bậc cao", "thời gian huấn luyện"]]];
+  c3.forEach(([h, c, b], i) => {
+    const x = M + i * 4.1;
+    card(s, x, 1.5, 3.8, 2.9, HEX.lt2, `do_do_${i}`);
+    text(s, h, { x: x + 0.25, y: 1.65, w: 3.3, h: 0.5, bold: true, fontSize: 18, color: c });
+    text(s, bullets(b, { fontSize: 15 }), { x: x + 0.25, y: 2.2, w: 3.3, h: 2.1 });
+  });
+  card(s, M, 4.65, W - 2 * M, 1.85, "FBE7DA", "delong");
+  text(s, [{ text: "Kiểm định DeLong ghép cặp", options: { bold: true, fontSize: 17, breakLine: true } },
+    { text: "So hiệu AUC của hai mô hình trên cùng các dự đoán (cùng thứ tự tất định). Kiểm định giả định dự đoán độc lập, bỏ qua tương quan trong cùng người học; với hàng triệu dự đoán, p rất nhỏ ngay cả khi hiệu nhỏ, nên đọc kèm độ lớn hiệu.", options: { fontSize: 15 } }],
+    { x: M + 0.3, y: 4.8, w: W - 2 * M - 0.6, h: 1.6 });
+  s.addNotes("Mục 4.2 của dàn ý. Dàn ý ban đầu dự kiến trung bình ± độ lệch chuẩn qua 5 phần; hiện mới có phần 0 nên dùng kiểm định DeLong ghép cặp.");
+};
+
+SL.nhom_kn = () => {
+  CRUMB = "4.3 Kết quả: nhóm khái niệm và kiểm định";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Lợi thế của đồ thị chuyên gia nằm ở nút có cạnh", { placeholder: "title" });
+  const b4 = K.bang4 || [];
+  const mods = MAIN.filter((m) => b4.length && b4[0][m] != null);
+  s.addTable([head(["Nhóm khái niệm", ...mods]), ...b4.map((r) => [r["nhóm"], ...mods.map((m) => f(r[m], 4))])],
+    tableOpt({ x: M, y: 1.45, w: 6.6, colW: [2.2, ...Array(mods.length).fill(4.4 / mods.length)], fontSize: 12 }));
+  const tests = (K.kiem_dinh || []).filter((r) => r["tập"] === "toàn bộ" || r["tập"] === "khái niệm giữ lại");
+  s.addTable([head(["Tập", "So sánh", "Hiệu AUC", "p"]),
+    ...tests.map((r) => [r["tập"] === "toàn bộ" ? "toàn bộ" : "giữ lại", `${r["mô hình 1"]} − ${r["mô hình 2"]}`, sign(r.delta),
+      r.p_value < 1e-4 ? "< 10⁻⁴" : f(r.p_value, 3)])],
+    tableOpt({ x: M + 6.9, y: 1.45, w: W - 2 * M - 6.9, colW: [0.95, 2.55, 1.0, 0.73], fontSize: 11 }));
+  text(s, "Trên khái niệm cô lập trong đồ thị chuyên gia, ba biến thể GKT gần như bằng nhau: nút cô lập không nhận thông điệp lân cận, nên lợi thế chỉ xuất hiện ở nút có cạnh, đúng cơ chế lan truyền.",
+    { x: M, y: 5.6, w: W - 2 * M, h: 0.9, fontSize: 15, color: HEX.dk2 });
+  s.addNotes("Bảng V và Bảng VI của báo cáo. Hiệu AUC khoảng 0,003 có p rất nhỏ nhưng cần đọc kèm độ lớn hiệu.");
+};
+
+SL.sieu_tham_so = () => {
+  CRUMB = "Phụ lục A. Siêu tham số";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Siêu tham số", { placeholder: "title" });
+  s.addTable([head(["Mô hình", "Tham số chính", "Cỡ lô", "Tối ưu"]),
+    ["GKT (ba đồ thị)", "ẩn 32, nhúng 32, dropout 0,1, chuẩn hóa theo hàng, tự cập nhật nút cô lập; 129.701 tham số", "128", "Adam 10⁻³, cắt gradient 1,0, tối đa 10 epoch, dừng sớm sau 3 epoch"],
+    ["DKT", "nhúng 64, LSTM 64, dropout 0,1; 194.435 tham số", "128", "như trên"],
+    ["AKT", "d_model 256, 4 khối, 8 head, dropout 0,2 (cài đặt pyKT); 4.568.417 tham số", "64", "như trên"],
+    ["Đồ thị thống kê", "ngưỡng thành thạo 0,5; hỗ trợ tối thiểu 50; ưu tiên 1 cạnh vào mỗi nút; 979 cạnh", "—", "—"]],
+    tableOpt({ x: M, y: 1.5, w: W - 2 * M, colW: [2.2, 5.6, 1.0, 3.33], fontSize: 14 }));
+};
+
+SL.tai_lieu = () => {
+  CRUMB = "Tài liệu tham khảo";
+  const s = addSlide("NOI_DUNG");
+  s.addText("Tài liệu tham khảo chính", { placeholder: "title" });
+  const refs = T.tai_lieu_slide || [];
+  const half = Math.ceil(refs.length / 2);
+  [refs.slice(0, half), refs.slice(half)].forEach((col, j) => text(s, col.map((r, i) => ({ text: r, options: { breakLine: i < col.length - 1, paraSpaceAfter: 5 } })),
+    { x: M + j * 6.15, y: 1.45, w: 5.9, h: 5.2, fontSize: 12 }));
+  s.addNotes("Danh mục đầy đủ (25 tài liệu, định dạng IEEE) ở cuối bài báo.");
+};
+
+// ------------------------------------------------------------------ thứ tự theo dàn ý (docs/DAN_Y.md)
+const DAN_Y = [
+  ["Mở đầu", ["bia", "tom_tat", "muc_luc"]],
+  ["1. Giới thiệu", ["chuong", "aied", "truy_vet", "cau_hoi", "dong_gop"]],
+  ["2. Nghiên cứu liên quan", ["chuong", "ba_nhom", "tong_hop_nc"]],
+  ["3. Phương pháp", ["chuong", "tien_xu_ly", "nut_co_lap", "kien_truc", "ba_do_thi", "hinh2", "quy_trinh"]],
+  ["4. Thực nghiệm", ["chuong", "du_lieu", "do_do", "ket_qua", "giu_lai", "nhom_kn", "cat_bo", "case_chuoi", "case_buoc", "case_hinh", "case_tom", "phan_bien"]],
+  ["5. Kết luận", ["chuong", "han_che", "ket_luan"]],
+  ["Phụ lục", ["chuong", "sieu_tham_so", "tai_lieu"]],
+];
+DAN_Y.forEach(([section, slides]) => { CUR_SEC = section; slides.forEach((k) => { CRUMB = null; SL[k](); }); });
 
 (async () => {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
