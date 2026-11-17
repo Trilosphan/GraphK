@@ -73,6 +73,17 @@ const image = (s, file, x, y, w, h, alt) => {
   if (fs.existsSync(file)) s.addImage({ path: file, x, y, w, h, sizing: { type: "contain", w, h }, altText: alt });
   else text(s, `[thiếu hình ${path.basename(file)}]`, { x, y, w, h, color: HEX.accent5 });
 };
+// công thức LaTeX dựng sẵn bởi report/ve_cong_thuc.py; đặt ảnh ở cỡ chữ `pt`, trả về chiều cao (inch)
+const CT_DIR = path.join(reportDir, "figures", "cong_thuc");
+const CT = fs.existsSync(path.join(CT_DIR, "kich_thuoc.json")) ? JSON.parse(fs.readFileSync(path.join(CT_DIR, "kich_thuoc.json"), "utf8")) : null;
+const formula = (s, key, x, y, pt = 16, maxW = null) => {
+  if (!CT || !CT.cong_thuc[key]) { text(s, `[thiếu công thức ${key}]`, { x, y, w: 3, h: 0.4, color: HEX.accent5 }); return 0.4; }
+  let k = pt / CT.co_chu;
+  const { w, h } = CT.cong_thuc[key];
+  if (maxW && w * k > maxW) k = maxW / w;
+  s.addImage({ path: path.join(CT_DIR, `${key}.png`), x, y, w: w * k, h: h * k, altText: `Công thức ${key}` });
+  return h * k;
+};
 const chartStyle = {
   catAxisLabelColor: HEX.dk2, valAxisLabelColor: HEX.dk2, catAxisLabelFontFace: "Calibri", valAxisLabelFontFace: "Calibri",
   dataLabelFontFace: "Calibri", titleFontFace: "Calibri", legendFontFace: "Calibri", catAxisLabelFontSize: 12, valAxisLabelFontSize: 11,
@@ -119,8 +130,9 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
     text(s, [{ text: c, options: { bold: true, breakLine: true } }, { text: a === "?" ? "P(đúng) = ?" : a ? "đúng" : "sai" }],
       { x: x + 0.15, y: 1.85, w: 1.85, h: 1.0, color: HEX.lt1, fontSize: 16, align: "center", valign: "middle" });
   });
-  text(s, "Mỗi tương tác: (khái niệm q_t, kết quả a_t). Mô hình ước lượng trạng thái tri thức ẩn và P(a_{t+1}=1 | q_{t+1}, lịch sử).",
-    { x: M, y: 3.35, w: W - 2 * M, h: 0.6, fontSize: 16, color: HEX.dk2 });
+  text(s, "Mỗi tương tác là cặp (khái niệm, kết quả). Mô hình ước lượng trạng thái tri thức ẩn và dự đoán",
+    { x: M, y: 3.3, w: 7.6, h: 0.75, fontSize: 16, color: HEX.dk2 });
+  formula(s, "kt", M + 7.8, 3.38, 20);
   const fam = [["Tuần tự", "DKT (LSTM)", "quan hệ khái niệm chỉ ngầm trong trạng thái ẩn"],
     ["Chú ý", "AKT, simpleKT", "chú ý theo thời gian, không có cấu trúc tiên quyết"],
     ["Đồ thị", "GKT, SKT, GIKT", "lan truyền trên đồ thị khái niệm — đồ án này"]];
@@ -197,13 +209,17 @@ const graphRow = (name) => (K.do_thi || []).find((r) => r.graph === name) || {};
   const s = addSlide("NOI_DUNG", "Phương pháp");
   s.addText("Ba đồ thị cùng 979 cạnh và giao thức chống rò rỉ", { placeholder: "title" });
   const cols = [["Chuyên gia", "cạnh tiên quyết Junyi", graphRow("expert"), HEX.accent1],
-    ["Thống kê", "AV(A→B) = P(B|A) − P(B), chỉ tập huấn luyện", graphRow("stat"), HEX.accent2],
+    ["Thống kê", "", graphRow("stat"), HEX.accent2],
     ["Ngẫu nhiên", "đối chứng âm, cùng số cạnh", graphRow("random"), HEX.accent4]];
   cols.forEach(([h, d, r, c], i) => {
     const x = M + i * 2.95;
     card(s, x, 1.5, 2.75, 3.0, HEX.lt2, `do_thi_${i}`);
     text(s, h, { x: x + 0.2, y: 1.65, w: 2.35, h: 0.5, bold: true, fontSize: 18, color: c });
-    text(s, d, { x: x + 0.2, y: 2.2, w: 2.35, h: 0.9, fontSize: 13 });
+    if (d) text(s, d, { x: x + 0.2, y: 2.2, w: 2.35, h: 0.9, fontSize: 13 });
+    else {
+      formula(s, "av", x + 0.2, 2.25, 13, 2.35);
+      text(s, "giá trị gia tăng, chỉ tập huấn luyện", { x: x + 0.2, y: 2.62, w: 2.35, h: 0.6, fontSize: 13 });
+    }
     text(s, [{ text: `${r.n_isolated ?? "—"} nút cô lập`, options: { breakLine: true } }, { text: `Jaccard với chuyên gia: ${f(r.jaccard_directed, 3)}` }],
       { x: x + 0.2, y: 3.3, w: 2.35, h: 1.0, fontSize: 13, color: HEX.dk2 });
   });
@@ -318,11 +334,13 @@ if (CS.q) {
       bold: !!highlight, color: highlight ? HEX.lt1 : HEX.dk1 });
   });
   const correct = CS.r.filter((v) => v).length;
+  const RX = M + 8.0, RW = W - 2 * M - 8.0;
   text(s, [
     { text: "Bài toán truy vết tri thức", options: { bold: true, fontSize: 17, breakLine: true } },
-    { text: `Người học ${CS.user_id}: ${CS.q.length} tương tác (q_t, a_t), ${correct} lần đúng.`, options: { breakLine: true } },
-    { text: "Mỗi bước, mô hình đọc lịch sử q_1..t, a_1..t và dự đoán P(a_{t+1} = 1 | q_{t+1}).", options: { breakLine: true } },
-    { text: " ", options: { breakLine: true } },
+    { text: `Người học ${CS.user_id}: ${CS.q.length} tương tác, ${correct} lần đúng. Mỗi bước, mô hình đọc lịch sử và dự đoán`, options: {} },
+  ], { x: RX, y: 1.55, w: RW, h: 1.15, fontSize: 14 });
+  formula(s, "kt", RX, 2.75, 15, RW);
+  text(s, [
     { text: "Đồ thị tiên quyết chuyên gia", options: { bold: true, fontSize: 17, breakLine: true } },
     { text: "Mũi tên u → v: phải nắm u trước khi học v. GKT dùng chính các cạnh này để truyền bằng chứng giữa các khái niệm.", options: { breakLine: true } },
     ...(STEP ? [{ text: " ", options: { breakLine: true } },
@@ -330,7 +348,7 @@ if (CS.q) {
       { text: csName(STEP.a), options: { bold: true, color: HEX.accent1 } },
       { text: "; khái niệm phụ thuộc ", options: {} }, { text: csName(STEP.b), options: { bold: true, color: HEX.accent3 } },
       { text: " chưa được làm.", options: {} }] : []),
-  ], { x: M + 8.0, y: 1.55, w: W - 2 * M - 8.0, h: 5.0, fontSize: 14 });
+  ], { x: RX, y: 3.3, w: RW, h: 3.2, fontSize: 14 });
   s.addNotes("Giới thiệu case study như một ví dụ cụ thể của bài toán: chuỗi (khái niệm, kết quả) của một người học thật trong tập kiểm tra, "
     + "và các cạnh tiên quyết chuyên gia giữa những khái niệm người học đã gặp. Khối màu cam là khái niệm được trả lời ở bước minh họa, khối màu xanh là khái niệm phụ thuộc chưa được làm.");
 }
@@ -339,19 +357,24 @@ if (STEP) {
   const s = addSlide("NOI_DUNG", "Case study");
   s.addText(`Lý thuyết qua một bước: làm đúng ${csName(STEP.a)}`, { placeholder: "title" });
   card(s, M, 1.45, 6.1, 5.2, HEX.lt2, "cong_thuc");
-  text(s, [
-    { text: "GKT lan truyền hai chiều", options: { bold: true, fontSize: 16, breakLine: true, color: HEX.accent1 } },
-    { text: `1. Tương tác: x_t = E[2·i + a_t], i = ${csName(STEP.a)}, a_t = 1`, options: { breakLine: true } },
-    { text: "2. Tự thân: m_i = f_self([h_i ; x_t])", options: { breakLine: true } },
-    { text: "3. Phụ thuộc j (cạnh i → j): m_j = w·f_fwd([h_i ; x_t ; h_j ; e_j])", options: { breakLine: true } },
-    { text: "    Tiên quyết j (cạnh j → i): m_j = w·f_bwd(…)", options: { breakLine: true } },
-    { text: "4. Cập nhật: h_j ← GRU(xóa–thêm(m_j), h_j), chỉ i và lân cận", options: { breakLine: true } },
-    { text: "5. Dự đoán: P(đúng j) = σ(W·h_j + b)", options: { breakLine: true } },
-    { text: " ", options: { breakLine: true } },
-    { text: "DKT (đối chứng)", options: { bold: true, fontSize: 16, breakLine: true, color: HEX.accent3 } },
-    { text: "h_t = LSTM(x_t, h_{t-1}): một vector chung cho mọi khái niệm;", options: { breakLine: true } },
-    { text: "P(đúng j) = σ(W_j·h_t). Quan hệ giữa khái niệm chỉ nằm ngầm trong W.", options: {} },
-  ], { x: M + 0.25, y: 1.6, w: 5.6, h: 4.9, fontSize: 13 });
+  // mỗi bước: nhãn (chữ) rồi công thức LaTeX
+  const steps = [
+    ["GKT lan truyền hai chiều", null, HEX.accent1],
+    [`1. Tương tác (i = ${csName(STEP.a)}, a_t = 1)`, ["gkt_x"]],
+    ["2. Thông điệp tự thân", ["gkt_self"]],
+    ["3. Lân cận: xuôi tới phụ thuộc, ngược tới tiên quyết", ["gkt_nb", "gkt_s"]],
+    ["4. Cổng xóa–thêm, GRU (chỉ i và lân cận)", ["gkt_ea", "gkt_gru"]],
+    ["5. Dự đoán", ["gkt_pred"]],
+    ["DKT (đối chứng): một vector ẩn chung", ["dkt_h", "dkt_pred"], HEX.accent3],
+  ];
+  let yy = 1.6;
+  steps.forEach(([label, keys, color]) => {
+    const head = !keys || color;
+    if (color && yy > 2) yy += 0.08;
+    text(s, label, { x: M + 0.25, y: yy, w: 5.6, h: 0.28, fontSize: head ? 15 : 12, bold: !!head, color: color || HEX.dk2 });
+    yy += head ? 0.34 : 0.27;
+    (keys || []).forEach((k) => { yy += formula(s, k, M + 0.45, yy, 13, 5.4) + 0.04; });
+  });
   // bảng trước / sau cho khái niệm được trả lời và các lân cận trong chuỗi
   const nb = [STEP.a, ...new Set((CS.chain || []).flatMap(([a, b]) => (a === STEP.a ? [b] : b === STEP.a ? [a] : [])))];
   const models = Object.keys(CS.traces);
