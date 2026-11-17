@@ -172,12 +172,12 @@ def load_trained(runs_dir: str | Path, name: str, proc_dir: str | Path, data: di
     """Tải mô hình tốt nhất (best.pt) của một thực nghiệm, ở chế độ đánh giá trên CPU."""
     import torch
     from graphk.models import build_model
-    from graphk.train import Config, load_graph
+    from graphk.train import Config, load_graph, load_model_state
     cfg_dict = json.loads((Path(runs_dir) / name / "config.json").read_text())
     cfg = Config(**cfg_dict)
     adj = load_graph(cfg, Path(proc_dir), data["adj_expert"])
     model = build_model(cfg.model, len(data["nodes"]), adj, **cfg.model_kwargs)
-    model.load_state_dict(torch.load(Path(runs_dir) / name / "best.pt", map_location="cpu"))
+    load_model_state(model, torch.load(Path(runs_dir) / name / "best.pt", map_location="cpu"))
     return model.eval()
 
 

@@ -126,6 +126,19 @@ def evaluate(y, p, q, heldout: np.ndarray) -> dict:
 
 # ---------------------------------------------------------------- huấn luyện
 
+def load_model_state(model: nn.Module, state: dict) -> None:
+    """Nạp tham số, bỏ qua bộ đệm lân cận nbr_* của GKT.
+
+    Các bộ đệm này được dựng lại từ đồ thị khi khởi tạo mô hình (không học), và tên của chúng đã đổi
+    giữa các phiên bản (nbr_typ, nbr_w -> nbr_wf, nbr_wb); điểm kiểm tra cũ vẫn nạp được.
+    """
+    state = {k: v for k, v in state.items() if not k.startswith("nbr")}
+    missing, unexpected = model.load_state_dict(state, strict=False)
+    missing = [k for k in missing if not k.startswith("nbr")]
+    if missing or unexpected:
+        raise RuntimeError(f"Điểm kiểm tra không khớp mô hình: thiếu {missing}, thừa {unexpected}")
+
+
 def run(cfg: Config, data: dict | None = None, log=print) -> dict:
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
@@ -158,7 +171,7 @@ def run(cfg: Config, data: dict | None = None, log=print) -> dict:
     last = run_dir / "last.pt"
     if last.exists():
         ck = torch.load(last, map_location=device)
-        model.load_state_dict(ck["model"])
+        load_model_state(model, ck["model"])
         opt.load_state_dict(ck["opt"])
         state = ck["state"]
         rng = np.random.default_rng(cfg.seed + state["epoch"])
@@ -208,7 +221,7 @@ def run(cfg: Config, data: dict | None = None, log=print) -> dict:
         log(f"Epoch {state['epoch']}: mất mát {total / max(count, 1):.4f} | AUC kiểm định {auc:.4f} | "
             f"AUC khái niệm giữ lại {val['heldout']['auc']} | {train_time / 60:.1f} phút | lô bỏ qua {skipped}{' *' if improved else ''}")
 
-    model.load_state_dict(torch.load(run_dir / "best.pt", map_location=device))
+    load_model_state(model, torch.load(run_dir / "best.pt", map_location=device))
     y, p, qq = predict(model, seqs, test_batches, device, cfg.max_eval_batches)
     test = evaluate(y, p, qq, heldout)
     np.savez_compressed(run_dir / "test_predictions.npz", y=y.astype(np.int8), p=p.astype(np.float32), q=qq.astype(np.int16))

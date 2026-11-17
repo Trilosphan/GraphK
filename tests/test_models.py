@@ -135,3 +135,15 @@ def test_trace_matches_forward(name, kwargs):
     assert tr.shape == (12, N)
     fwd = torch.sigmoid(model(q.unsqueeze(0), r.unsqueeze(0)))[0]
     assert torch.allclose(tr[torch.arange(11), q[1:]], fwd, atol=1e-5)
+
+
+def test_load_model_state_ignores_old_neighbor_buffers():
+    from graphk.train import load_model_state
+    model = build_model("gkt", N, ADJ, hidden=8, emb=8)
+    sd = {k: v for k, v in model.state_dict().items() if not k.startswith("nbr")}
+    sd["nbr_typ"], sd["nbr_w"] = torch.zeros(3), torch.zeros(3)   # tên bộ đệm của phiên bản cũ
+    load_model_state(model, sd)
+    bad = dict(sd)
+    bad.pop("out.weight")
+    with pytest.raises(RuntimeError):
+        load_model_state(model, bad)
